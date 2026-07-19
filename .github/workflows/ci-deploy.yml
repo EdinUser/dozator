@@ -1,0 +1,99 @@
+name: CI and Deploy
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: dozator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Upload build artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dozator-dist
+          path: dist/
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to VPS
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: [redacted-deploy-user]
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_PORT: [redacted-ssh-port]
+      WEB_ROOT: [redacted-web-root]
+      WEB_OWNER: [redacted-web-owner]
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dozator-dist
+          path: dist
+
+      - name: Configure SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+
+      - name: Verify deploy connection and target
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" \
+            "set -euo pipefail; test -d '${WEB_ROOT}'; test -w '${WEB_ROOT}'; tmp='${WEB_ROOT}/.dozator-deploy-test'; printf 'ok' > \"\$tmp\"; test \"\$(cat \"\$tmp\")\" = 'ok'; rm -f \"\$tmp\""
+
+      - name: Sync static files to VPS
+        run: |
+          set -euo pipefail
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/vps_key -p ${VPS_PORT} -o StrictHostKeyChecking=no" \
+            dist/ "${VPS_USER}@${VPS_HOST}:${WEB_ROOT}/"
+
+      - name: Fix ISPConfig permissions
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: [redacted-deploy-user]
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: [redacted-ssh-port]
+          script: |
+            chown -R [redacted-web-owner] [redacted-web-root]
+            find [redacted-web-root] -type d -exec chmod 755 {} \;
+            find [redacted-web-root] -type f -exec chmod 644 {} \;
