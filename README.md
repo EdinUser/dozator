@@ -63,4 +63,30 @@ npm run build
 
 ## Деплой
 
-Приложението се build-ва до статична директория `dist/`. Планираният production target е VPS през `ssh vps`, след като поддомейнът и web root директорията са създадени в ISPConfig. DNS се управлява през Cloudflare.
+Приложението се build-ва до статична директория `dist/`.
+
+GitHub Actions:
+
+- pull request към `main`: `npm ci`, `npm test`, `npm run build`;
+- push към `main`: същите проверки, след това deploy към VPS.
+
+Production target:
+
+```text
+[redacted-web-root]
+```
+
+Deployment използва SSH към VPS на порт `[redacted-ssh-port]` и синхронизира `dist/` с `rsync`. След deploy се задават ISPConfig permissions:
+
+```text
+owner: [redacted-web-owner]
+directories: 755
+files: 644
+```
+
+Нужни GitHub repository secrets:
+
+```text
+VPS_HOST
+VPS_SSH_KEY
+```
