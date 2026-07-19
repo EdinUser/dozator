@@ -12,6 +12,10 @@ export function readHistory(storage, calculator = null) {
   return calculator ? entries.filter((entry) => entry.calculator === calculator) : entries;
 }
 
+export function clearHistory(storage) {
+  writeEntries(storage, historyKey, []);
+}
+
 export function saveFavorite(storage, entry) {
   writeEntries(storage, favoritesKey, [entry, ...readEntries(storage, favoritesKey)]);
 }

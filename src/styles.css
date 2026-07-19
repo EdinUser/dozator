@@ -35,14 +35,27 @@ body {
 }
 
 .brand-button {
+  align-items: center;
   appearance: none;
   border: 0;
   background: transparent;
   color: inherit;
+  display: inline-flex;
   font-size: 1.65rem;
   font-weight: 800;
+  gap: 0.6rem;
   line-height: 1;
+  min-height: 44px;
   padding: 0;
+}
+
+.brand-icon {
+  background: #fff;
+  border-radius: 8px;
+  display: block;
+  flex: 0 0 auto;
+  height: 2.25rem;
+  width: 2.25rem;
 }
 
 .header-actions {
@@ -201,6 +214,46 @@ legend {
   display: grid;
   gap: 0.5rem;
   grid-template-columns: 1fr 1fr;
+}
+
+.infusion-mode-options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.infusion-mode-option {
+  align-items: flex-start;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.9rem 1rem;
+}
+
+.infusion-mode-option strong {
+  color: var(--app-text);
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.infusion-mode-option small {
+  color: var(--app-muted);
+  line-height: 1.35;
+}
+
+.btn-check:checked + .infusion-mode-option {
+  background: rgba(27, 94, 122, 0.1);
+  border-color: var(--app-primary);
+  box-shadow: 0 0 0 0.18rem rgba(27, 94, 122, 0.16);
+}
+
+.btn-check:focus-visible + .infusion-mode-option {
+  outline: 3px solid rgba(27, 94, 122, 0.35);
+  outline-offset: 2px;
 }
 
 .high-alert {
