@@ -1,16 +1,17 @@
 import { parseDecimal } from "../units/units.js";
+import { bg } from "../i18n/bg.js";
 
 export function validatePositiveFields(fields) {
   return fields
     .filter((field) => !Number.isFinite(parseDecimal(field.value)) || parseDecimal(field.value) <= 0)
-    .map((field) => `${field.label} трябва да бъде положително число.`);
+    .map((field) => bg.safety.positiveField(field.label));
 }
 
 export function volumeWarnings(volumeMl) {
   const warnings = [];
 
   if (volumeMl > 0 && volumeMl < 0.1) {
-    warnings.push("Изчисленият обем е под 0.1 mL и може да не бъде измерим точно с избраната спринцовка.");
+    warnings.push(bg.safety.smallVolume);
   }
 
   return warnings;
@@ -21,7 +22,5 @@ export function highAlertWarning(enabled) {
     return [];
   }
 
-  return [
-    "High-alert медикамент: проверете назначението, концентрацията на продукта, болничния протокол и изчислението независимо.",
-  ];
+  return [bg.safety.highAlert];
 }

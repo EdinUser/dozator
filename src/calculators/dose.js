@@ -8,12 +8,13 @@ import {
   toMg,
 } from "../units/units.js";
 import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { bg } from "../i18n/bg.js";
 
 export function calculateDose(input) {
   const errors = validatePositiveFields([
-    { label: "Назначена доза", value: input.requiredDose },
-    { label: "Налично количество", value: input.availableAmount },
-    { label: "Наличен обем", value: input.availableVolume },
+    { label: bg.fields.prescribedDose, value: input.requiredDose },
+    { label: bg.fields.availableAmount, value: input.availableAmount },
+    { label: bg.fields.availableVolume, value: input.availableVolume },
   ]);
 
   if (errors.length) {
@@ -40,8 +41,8 @@ export function calculateDose(input) {
   return {
     ok: true,
     primary: formatVolumeMl(withdrawMl),
-    instructions: [`Изтеглете ${formatVolumeMl(withdrawMl)} от наличния разтвор.`, `Обемът съдържа ${formatMassMg(requiredMg)}.`],
-    finalLines: [`Назначена доза: ${formatMassMg(requiredMg)}`],
+    instructions: [bg.calculations.dose.withdraw(formatVolumeMl(withdrawMl)), bg.calculations.dose.contains(formatMassMg(requiredMg))],
+    finalLines: [bg.calculations.dose.finalDose(formatMassMg(requiredMg))],
     notices,
     traces,
     warnings: [...volumeWarnings(withdrawMl), ...highAlertWarning(input.highAlert)],
@@ -49,7 +50,7 @@ export function calculateDose(input) {
       totalAmount: formatMassMg(requiredMg),
       finalVolume: formatVolumeMl(withdrawMl),
       concentration: `${formatNumber(availableMgPerMl)} mg/mL`,
-      recipe: `Изтеглете ${formatVolumeMl(withdrawMl)} от наличния разтвор.`,
+      recipe: bg.calculations.dose.withdraw(formatVolumeMl(withdrawMl)),
     },
   };
 }

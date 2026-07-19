@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteFavorite, favoritesKey, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "../src/storage/calculation-store.js";
+import { clearHistory, deleteFavorite, favoritesKey, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "../src/storage/calculation-store.js";
 import { calculationSummary } from "../src/storage/summaries.js";
 
 describe("calculation storage", () => {
@@ -32,6 +32,18 @@ describe("calculation storage", () => {
     expect(readHistory(storage, "dose")[0].id).toBe("11");
     expect(readHistory(storage, "dose")[9].id).toBe("2");
     expect(readHistory(storage, "dilution")).toHaveLength(10);
+  });
+
+  it("clears history without removing favorites", () => {
+    const storage = memoryStorage();
+
+    saveHistoryEntry(storage, makeCalculationEntry("dose", "history", { requiredDose: "125" }));
+    saveFavorite(storage, makeCalculationEntry("dose", "favorite", { requiredDose: "250" }, "template"));
+
+    clearHistory(storage);
+
+    expect(readHistory(storage)).toEqual([]);
+    expect(readFavorites(storage)).toHaveLength(1);
   });
 
   it("saves and deletes favorites", () => {
