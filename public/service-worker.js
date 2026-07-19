@@ -14,12 +14,7 @@ const appShell = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(cacheName)
-      .then((cache) => cache.addAll(appShell))
-      .then(() => self.skipWaiting()),
-  );
+  event.waitUntil(cacheAppShell().then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
@@ -61,7 +56,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  const cached = await matchCachedRequest(request);
 
   if (cached) {
     return cached;
@@ -74,6 +69,23 @@ async function cacheFirst(request) {
   return response;
 }
 
+async function cacheAppShell() {
+  const cache = await caches.open(cacheName);
+  await cache.addAll(appShell);
+
+  const indexResponse = await fetch("/index.html", { cache: "reload" });
+
+  if (!indexResponse.ok) {
+    return;
+  }
+
+  const html = await indexResponse.clone().text();
+  await cache.put("/", indexResponse.clone());
+  await cache.put("/index.html", indexResponse.clone());
+
+  await Promise.all(extractSameOriginAssetUrls(html).map((url) => cache.add(url).catch(() => null)));
+}
+
 async function networkFirst(request, fallbackUrl) {
   try {
     const response = await fetch(request);
@@ -82,8 +94,12 @@ async function networkFirst(request, fallbackUrl) {
 
     return response;
   } catch {
-    return caches.match(request).then((cached) => cached || caches.match(fallbackUrl));
+    return matchCachedRequest(request).then((cached) => cached || caches.match(fallbackUrl));
   }
+}
+
+async function matchCachedRequest(request) {
+  return caches.match(request).then((cached) => cached || caches.match(new URL(request.url).pathname));
 }
 
 function isSameOriginGettable(url) {
@@ -92,4 +108,14 @@ function isSameOriginGettable(url) {
   } catch {
     return false;
   }
+}
+
+function extractSameOriginAssetUrls(html) {
+  return [
+    ...new Set(
+      [...html.matchAll(/(?:href|src)="([^"]+)"/g)]
+        .map((match) => match[1])
+        .filter((url) => url.startsWith("/") && !url.startsWith("//")),
+    ),
+  ];
 }

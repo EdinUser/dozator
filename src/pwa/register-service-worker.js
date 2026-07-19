@@ -6,10 +6,10 @@ export function registerServiceWorker({ enabled = import.meta.env.PROD } = {}) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js")
-      .then((registration) => registration.active || registration.waiting || registration.installing)
-      .then((worker) => {
-        if (worker) {
-          worker.postMessage({ type: "CACHE_URLS", urls: currentPageResourceUrls() });
+      .then(() => navigator.serviceWorker.ready)
+      .then((registration) => {
+        if (registration.active) {
+          registration.active.postMessage({ type: "CACHE_URLS", urls: currentPageResourceUrls() });
         }
       })
       .catch(() => null);

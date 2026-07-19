@@ -19,6 +19,8 @@ describe("PWA assets", () => {
     expect(serviceWorker).toContain("dozator-${appVersion}");
     expect(serviceWorker).toContain('self.addEventListener("install"');
     expect(serviceWorker).toContain('self.addEventListener("fetch"');
+    expect(serviceWorker).toContain("extractSameOriginAssetUrls");
+    expect(serviceWorker).toContain('matchAll(/(?:href|src)="([^"]+)"/g)');
     expect(serviceWorker).toContain("networkFirst(event.request, \"/\")");
   });
 });
