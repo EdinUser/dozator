@@ -48,7 +48,7 @@ body {
 }
 
 .app-header {
-  background: #176b87;
+  background: var(--app-primary-dark);
   color: #fff;
   padding: 1rem 0;
 }
@@ -104,8 +104,8 @@ body {
 }
 
 .safety-strip {
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
   font-size: 0.95rem;
   padding: 0.75rem;
@@ -116,7 +116,64 @@ body {
   font-size: 0.82rem;
   font-weight: 700;
   margin-top: 0.4rem;
-  opacity: 0.92;
+}
+
+.btn-outline-primary {
+  --bs-btn-active-bg: #06313f;
+  --bs-btn-active-border-color: #06313f;
+  --bs-btn-active-color: #fff;
+  --bs-btn-border-color: var(--app-primary-dark);
+  --bs-btn-color: var(--app-primary-dark);
+  --bs-btn-hover-bg: #06313f;
+  --bs-btn-hover-border-color: #06313f;
+  --bs-btn-hover-color: #fff;
+}
+
+.btn-outline-secondary {
+  --bs-btn-active-bg: #4d5663;
+  --bs-btn-active-border-color: #4d5663;
+  --bs-btn-active-color: #fff;
+  --bs-btn-border-color: #4d5663;
+  --bs-btn-color: #4d5663;
+  --bs-btn-hover-bg: #4d5663;
+  --bs-btn-hover-border-color: #4d5663;
+  --bs-btn-hover-color: #fff;
+}
+
+.btn.btn-link {
+  --bs-btn-color: var(--app-primary-dark);
+  --bs-btn-hover-color: #0a3949;
+
+  color: var(--app-primary-dark);
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+  --bs-btn-active-bg: #9bd8ea;
+  --bs-btn-active-border-color: #9bd8ea;
+  --bs-btn-active-color: #12161d;
+  --bs-btn-border-color: #9bd8ea;
+  --bs-btn-color: #9bd8ea;
+  --bs-btn-hover-bg: #9bd8ea;
+  --bs-btn-hover-border-color: #9bd8ea;
+  --bs-btn-hover-color: #12161d;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+  --bs-btn-active-bg: #cbd5df;
+  --bs-btn-active-border-color: #cbd5df;
+  --bs-btn-active-color: #12161d;
+  --bs-btn-border-color: #cbd5df;
+  --bs-btn-color: #cbd5df;
+  --bs-btn-hover-bg: #cbd5df;
+  --bs-btn-hover-border-color: #cbd5df;
+  --bs-btn-hover-color: #12161d;
+}
+
+[data-bs-theme="dark"] .btn.btn-link {
+  --bs-btn-color: #9bd8ea;
+  --bs-btn-hover-color: #c4edf7;
+
+  color: #9bd8ea;
 }
 
 .app-main {
@@ -147,6 +204,16 @@ body {
 .calculator-history-button {
   flex: 0 0 auto;
   margin-top: 0.25rem;
+}
+
+.calculator-history-button.btn-outline-primary,
+.calculator-history-button.btn-outline-primary:hover,
+.calculator-history-button.btn-outline-primary:focus,
+.calculator-history-button.btn-outline-primary:active,
+.calculator-history-button.btn-outline-primary:focus-visible {
+  background-color: transparent;
+  border-color: var(--app-primary-dark);
+  color: var(--app-primary-dark);
 }
 
 .action-grid {
