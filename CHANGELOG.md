@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Documentation and deployment hygiene update before clinical terminology and calculation validation.
+- Production deployment details are secret-backed and no longer documented in repository files.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.1.0
 
 - Initial four calculators: dose from prepared solution, dilution, vial reconstitution, and infusion rate.
