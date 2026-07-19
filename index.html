@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Дозатор е прозрачен калкулатор за лекарствени изчисления за обучени медицински специалисти."
+    />
+    <script>
+      const savedTheme = localStorage.getItem("dozator-theme") || "light";
+      document.documentElement.setAttribute("data-bs-theme", savedTheme);
+    </script>
+    <title>Дозатор</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
