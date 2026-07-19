@@ -7,20 +7,20 @@ import {
   formatVolumeMl,
   toMl,
 } from "../units/units.js";
-import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { highAlertWarning, validatePositiveFieldEntries, volumeWarnings } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
 
 export function calculateDilution(input) {
-  const errors = validatePositiveFields([
-    { label: bg.fields.availableConcentrationAmount, value: input.availableAmount },
-    { label: bg.fields.availableConcentrationVolume, value: input.availableVolume },
-    { label: bg.fields.targetConcentrationAmount, value: input.targetAmount },
-    { label: bg.fields.targetConcentrationVolume, value: input.targetVolume },
-    { label: bg.fields.finalVolume, value: input.finalVolume },
+  const fieldErrors = validatePositiveFieldEntries([
+    { name: "availableAmount", label: bg.fields.availableConcentrationAmount, value: input.availableAmount },
+    { name: "availableVolume", label: bg.fields.availableConcentrationVolume, value: input.availableVolume },
+    { name: "targetAmount", label: bg.fields.targetConcentrationAmount, value: input.targetAmount },
+    { name: "targetVolume", label: bg.fields.targetConcentrationVolume, value: input.targetVolume },
+    { name: "finalVolume", label: bg.fields.finalVolume, value: input.finalVolume },
   ]);
 
-  if (errors.length) {
-    return { ok: false, errors };
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
   const availableMgPerMl = concentrationToMgPerMl(input.availableAmount, input.availableAmountUnit, input.availableVolume, input.availableVolumeUnit);
@@ -31,6 +31,10 @@ export function calculateDilution(input) {
     return {
       ok: false,
       errors: [bg.calculations.dilution.impossibleTarget],
+      fieldErrors: [
+        { name: "targetAmount", message: bg.calculations.dilution.impossibleTarget },
+        { name: "targetVolume", message: bg.calculations.dilution.impossibleTarget },
+      ],
     };
   }
 
@@ -42,6 +46,13 @@ export function calculateDilution(input) {
     return {
       ok: false,
       errors: [bg.calculations.dilution.medicationVolumeGreaterThanFinal],
+      fieldErrors: [
+        { name: "availableAmount", message: bg.calculations.dilution.medicationVolumeGreaterThanFinal },
+        { name: "availableVolume", message: bg.calculations.dilution.medicationVolumeGreaterThanFinal },
+        { name: "targetAmount", message: bg.calculations.dilution.medicationVolumeGreaterThanFinal },
+        { name: "targetVolume", message: bg.calculations.dilution.medicationVolumeGreaterThanFinal },
+        { name: "finalVolume", message: bg.calculations.dilution.medicationVolumeGreaterThanFinal },
+      ],
     };
   }
 

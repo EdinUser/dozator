@@ -106,6 +106,7 @@ describe("dilution calculator", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain("по-висока");
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["targetAmount", "targetVolume"]);
   });
 
   it("shows conversion notices for concentration units", () => {

@@ -3,6 +3,7 @@ export const bg = {
     name: "Дозатор",
     home: "Начало",
     menu: "Меню",
+    skipToContent: "Към съдържанието",
     safetyStrip: "Проверява аритметиката. Не замества назначение, инструкция на производителя, аптека или болничен протокол.",
   },
   calculators: {
@@ -65,6 +66,8 @@ export const bg = {
     conversionTitle: "Преобразуване",
     conversionNotice: "Единиците са преобразувани за изчислението.",
     enteredData: "Въведени данни",
+    successRegionLabel: "Резултат от изчислението",
+    errorRegionLabel: "Грешки в изчислението",
   },
   menu: {
     calculators: "Калкулатори",

@@ -28,6 +28,25 @@ body {
   color: var(--app-ink);
 }
 
+.skip-link {
+  background: #fff;
+  border: 2px solid var(--app-primary);
+  border-radius: 8px;
+  color: var(--app-primary-dark);
+  font-weight: 800;
+  left: 1rem;
+  padding: 0.75rem 1rem;
+  position: fixed;
+  top: 1rem;
+  transform: translateY(-160%);
+  transition: transform 0.12s ease;
+  z-index: 2000;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .app-header {
   background: #176b87;
   color: #fff;
@@ -62,6 +81,20 @@ body {
   display: flex;
   flex: 0 0 auto;
   gap: 0.5rem;
+}
+
+.header-actions .btn,
+.stored-actions .btn,
+.result-actions .btn,
+.calculator-history-button,
+.modal-footer .btn,
+.btn-close {
+  min-height: 44px;
+}
+
+.header-actions .btn,
+.btn-close {
+  min-width: 44px;
 }
 
 .fav-shortcut {
@@ -145,6 +178,17 @@ body {
   outline: 3px solid rgba(23, 107, 135, 0.18);
 }
 
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.brand-button:focus-visible,
+.menu-item:focus-visible,
+.stored-accordion .accordion-button:focus-visible {
+  box-shadow: none;
+  outline: 3px solid rgba(23, 107, 135, 0.32);
+  outline-offset: 2px;
+}
+
 .calculator-form {
   display: grid;
   gap: 1rem;
@@ -210,6 +254,19 @@ legend {
   flex: 0 0 6.25rem;
 }
 
+.field-error {
+  display: none;
+  margin-top: 0.45rem;
+}
+
+.field-row.has-error .field-error {
+  display: block;
+}
+
+.field-row.has-error .form-control {
+  border-color: var(--bs-danger);
+}
+
 .segmented {
   display: grid;
   gap: 0.5rem;
@@ -235,7 +292,7 @@ legend {
 }
 
 .infusion-mode-option strong {
-  color: var(--app-text);
+  color: var(--app-ink);
   font-size: 1rem;
   line-height: 1.2;
 }
@@ -467,6 +524,7 @@ legend {
   border-radius: 8px;
   color: var(--app-ink);
   display: block;
+  min-height: 44px;
   padding: 0.85rem;
   text-align: left;
   width: 100%;
