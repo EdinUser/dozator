@@ -514,23 +514,16 @@ function homeButton(key, title, text) {
   `;
 }
 
-function concentrationFields(prefix, amountValue, volumeValue) {
-  return `
-    ${numberWithUnit(`${prefix}Amount`, bg.forms.dose.amount, amountValue, ["g", "mg", "µg"], "mg")}
-    ${numberWithUnit(`${prefix}Volume`, bg.forms.dose.inVolume, volumeValue, ["L", "mL"], "mL")}
-  `;
+function concentrationField(name, label, placeholder, selectedUnit) {
+  return numberWithUnit(name, label, placeholder, ["mg/mL", "µg/mL", "%"], selectedUnit);
 }
 
-function concentrationField(name, label, value, selectedUnit) {
-  return numberWithUnit(name, label, value, ["mg/mL", "µg/mL", "%"], selectedUnit);
-}
-
-function numberWithUnit(name, label, value, units, selectedUnit, required = true) {
+function numberWithUnit(name, label, placeholder, units, selectedUnit, required = true) {
   return `
     <div class="field-row">
       <label class="form-label" for="${name}">${label}</label>
       <div class="input-group input-group-lg">
-        <input class="form-control" id="${name}" name="${name}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([\\.,][0-9]+)?" value="${value}" ${required ? "required" : ""}>
+        <input class="form-control" id="${name}" name="${name}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([\\.,][0-9]+)?" placeholder="${placeholder}" ${required ? "required" : ""}>
         <select class="form-select unit-select" name="${name}Unit" aria-label="${bg.forms.common.unitAriaLabel(label)}">
           ${units.map((unit) => `<option value="${unit}" ${unit === selectedUnit ? "selected" : ""}>${unit}</option>`).join("")}
         </select>

@@ -70,6 +70,25 @@ test("QR URL restore sanitizes free-text fields and recalculates locally", async
   await expect(page.locator("#requiredDose")).toHaveValue("350");
 });
 
+test("initial form examples are placeholders and focused values are selected", async ({ page }) => {
+  await page.goto("/#dose");
+  await expect(page.locator("#requiredDose")).toHaveValue("");
+  await expect(page.locator("#requiredDose")).toHaveAttribute("placeholder", "125");
+
+  await page.locator("#requiredDose").fill("125");
+  await page.locator("#availableAmount").fill("250");
+  await page.locator("#availableVolume").fill("5");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+  await page.getByRole("button", { name: "История" }).click();
+  await page.getByRole("button", { name: "Отвори" }).first().click();
+
+  await expect(page.locator("#requiredDose")).toHaveValue("125");
+  await page.getByRole("button", { name: "Промени" }).click();
+  await page.locator("#requiredDose").focus();
+  await page.keyboard.type("75");
+  await expect(page.locator("#requiredDose")).toHaveValue("75");
+});
+
 test("screen hash URLs load and survive reload", async ({ page }) => {
   for (const route of [
     { hash: "dose", heading: "Доза от готов разтвор" },

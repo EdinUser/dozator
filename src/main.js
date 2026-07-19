@@ -161,6 +161,7 @@ function wireEvents() {
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
   app.addEventListener("input", handleInput);
+  app.addEventListener("focusin", handleFocusIn);
   window.addEventListener("hashchange", handleHashChange);
   window.addEventListener("popstate", handlePopState);
 }
@@ -326,6 +327,12 @@ function handleChange(event) {
 function handleInput(event) {
   if (event.target.matches("[data-form] .form-control")) {
     clearFieldError(event.target);
+  }
+}
+
+function handleFocusIn(event) {
+  if (event.target.matches("[data-form] input.form-control")) {
+    event.target.select();
   }
 }
 
