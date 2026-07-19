@@ -1,16 +1,16 @@
 import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl, massConversionTrace, parseDecimal, toMg, toMl, volumeConversionTrace } from "../units/units.js";
-import { highAlertWarning, validatePositiveFields } from "../safety/warnings.js";
+import { highAlertWarning, validatePositiveFieldEntries } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
 
 export function calculateInfusionDoseRate(input) {
-  const errors = validatePositiveFields([
-    { label: bg.fields.medicationAmount, value: input.medicationAmount },
-    { label: bg.fields.finalVolume, value: input.finalVolume },
-    { label: bg.fields.prescribedRate, value: input.prescribedRate },
+  const fieldErrors = validatePositiveFieldEntries([
+    { name: "medicationAmount", label: bg.fields.medicationAmount, value: input.medicationAmount },
+    { name: "finalVolume", label: bg.fields.finalVolume, value: input.finalVolume },
+    { name: "prescribedRate", label: bg.fields.prescribedRate, value: input.prescribedRate },
   ]);
 
-  if (errors.length) {
-    return { ok: false, errors };
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
   const medicationMg = toMg(input.medicationAmount, input.medicationAmountUnit);
@@ -46,13 +46,13 @@ export function calculateInfusionDoseRate(input) {
 }
 
 export function calculateInfusionVolumeTime(input) {
-  const errors = validatePositiveFields([
-    { label: bg.fields.volume, value: input.volume },
-    { label: bg.fields.time, value: input.time },
+  const fieldErrors = validatePositiveFieldEntries([
+    { name: "volume", label: bg.fields.volume, value: input.volume },
+    { name: "time", label: bg.fields.time, value: input.time },
   ]);
 
-  if (errors.length) {
-    return { ok: false, errors };
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
   const volumeMl = toMl(input.volume, input.volumeUnit);
