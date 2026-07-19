@@ -71,14 +71,11 @@ describe("dose calculator", () => {
 describe("dilution calculator", () => {
   it("calculates medication and diluent volumes", () => {
     const result = calculateDilution({
-      availableAmount: "10",
-      availableAmountUnit: "mg",
-      availableVolume: "1",
-      availableVolumeUnit: "mL",
-      targetAmount: "2",
-      targetAmountUnit: "mg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "10",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "mg/mL",
       finalVolume: "20",
       finalVolumeUnit: "mL",
       highAlert: false,
@@ -89,16 +86,30 @@ describe("dilution calculator", () => {
     expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
   });
 
+  it("calculates final volume when diluting a known stock volume", () => {
+    const result = calculateDilution({
+      mode: "diluteAvailableAmount",
+      availableConcentration: "10",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "mg/mL",
+      stockVolume: "4",
+      stockVolumeUnit: "mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("20 mL");
+    expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
+  });
+
   it("rejects target concentration above available concentration", () => {
     const result = calculateDilution({
-      availableAmount: "2",
-      availableAmountUnit: "mg",
-      availableVolume: "1",
-      availableVolumeUnit: "mL",
-      targetAmount: "10",
-      targetAmountUnit: "mg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "2",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "10",
+      targetConcentrationUnit: "mg/mL",
       finalVolume: "20",
       finalVolumeUnit: "mL",
       highAlert: false,
@@ -106,19 +117,16 @@ describe("dilution calculator", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain("по-висока");
-    expect(result.fieldErrors.map((field) => field.name)).toEqual(["targetAmount", "targetVolume"]);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["targetConcentration"]);
   });
 
   it("shows conversion notices for concentration units", () => {
     const result = calculateDilution({
-      availableAmount: "1",
-      availableAmountUnit: "mg",
-      availableVolume: "1",
-      availableVolumeUnit: "mL",
-      targetAmount: "100",
-      targetAmountUnit: "µg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "1",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "100",
+      targetConcentrationUnit: "µg/mL",
       finalVolume: "20",
       finalVolumeUnit: "mL",
       highAlert: false,
@@ -126,7 +134,7 @@ describe("dilution calculator", () => {
 
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("2 mL");
-    expect(result.notices).toContain("100 µg = 0.1 mg");
+    expect(result.notices).toContain("100 µg/mL = 0.1 mg/mL");
   });
 });
 
@@ -157,13 +165,79 @@ describe("infusion calculators", () => {
       medicationAmountUnit: "mg",
       finalVolume: "250",
       finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
       prescribedRate: "25",
       prescribedRateUnit: "mg/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
       highAlert: false,
     });
 
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("12.5 mL/h");
+  });
+
+  it("calculates pump rate from weight-based microgram per minute dose", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "250",
+      medicationAmountUnit: "mg",
+      finalVolume: "50",
+      finalVolumeUnit: "mL",
+      patientWeight: "70",
+      patientWeightUnit: "kg",
+      prescribedRate: "5",
+      prescribedRateUnit: "µg/kg/min",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("4.2 mL/h");
+    expect(result.traces).toContain("5 µg/kg/min × 70 kg × 60 min/h = 21 mg/h");
+  });
+
+  it("calculates pump rate from weight-based microgram per hour dose", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "200",
+      medicationAmountUnit: "mg",
+      finalVolume: "50",
+      finalVolumeUnit: "mL",
+      patientWeight: "70",
+      patientWeightUnit: "kg",
+      prescribedRate: "5",
+      prescribedRateUnit: "µg/kg/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("0.0875 mL/h");
+    expect(result.traces).toContain("5 µg/kg/h × 70 kg = 0.35 mg/h");
+    expect(result.traces).toContain("0.35 mg/h ÷ 4 mg/mL = 0.0875 mL/h");
+  });
+
+  it("calculates optional volume speed from hours to run", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "500",
+      medicationAmountUnit: "mg",
+      finalVolume: "250",
+      finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
+      prescribedRate: "25",
+      prescribedRateUnit: "mg/h",
+      hoursToRun: "5",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("12.5 mL/h");
+    expect(result.instructions).toContain("Ако целият обем се влива за 5 h, скоростта по обем е 50 mL/h.");
+    expect(result.traces).toContain("250 mL ÷ 5 h = 50 mL/h");
   });
 
   it("calculates pump rate from volume and time", () => {

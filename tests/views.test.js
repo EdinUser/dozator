@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bg } from "../src/i18n/bg.js";
-import { renderCalculatorScreen, renderResultPanel } from "../src/ui/views.js";
+import { renderCalculatorScreen, renderClinicalValidationScreen, renderResultPanel } from "../src/ui/views.js";
 
 describe("calculator views", () => {
   it("renders infusion as two clear suboptions", () => {
@@ -26,6 +26,16 @@ describe("calculator views", () => {
     expect(html).toContain("novalidate");
     expect(html).toContain("id=\"requiredDoseError\"");
     expect(html).toContain("class=\"invalid-feedback field-error\"");
+  });
+
+  it("renders validation summary for current calculator formulas", () => {
+    const html = renderClinicalValidationScreen();
+
+    expect(html).toContain("1% се приема като 10 mg/mL");
+    expect(html).toContain("Разреждане към краен обем");
+    expect(html).toContain("Разреждане на наличен обем");
+    expect(html).toContain("/min се умножава по kg и по 60");
+    expect(html).toContain("/h се умножава по kg без x60");
   });
 
   it("renders focusable live result and alert panels", () => {

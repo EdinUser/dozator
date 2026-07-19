@@ -348,12 +348,12 @@ legend {
   grid-template-columns: 1fr 1fr;
 }
 
-.infusion-mode-options {
+.calculator-mode-options {
   display: grid;
   gap: 0.75rem;
 }
 
-.infusion-mode-option {
+.calculator-mode-option {
   align-items: flex-start;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
@@ -366,24 +366,24 @@ legend {
   padding: 0.9rem 1rem;
 }
 
-.infusion-mode-option strong {
+.calculator-mode-option strong {
   color: var(--app-ink);
   font-size: 1rem;
   line-height: 1.2;
 }
 
-.infusion-mode-option small {
+.calculator-mode-option small {
   color: var(--app-muted);
   line-height: 1.35;
 }
 
-.btn-check:checked + .infusion-mode-option {
+.btn-check:checked + .calculator-mode-option {
   background: rgba(27, 94, 122, 0.1);
   border-color: var(--app-primary);
   box-shadow: 0 0 0 0.18rem rgba(27, 94, 122, 0.16);
 }
 
-.btn-check:focus-visible + .infusion-mode-option {
+.btn-check:focus-visible + .calculator-mode-option {
   outline: 3px solid rgba(27, 94, 122, 0.35);
   outline-offset: 2px;
 }
