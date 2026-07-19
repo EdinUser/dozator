@@ -7,18 +7,18 @@ import {
   massConversionTrace,
   toMg,
 } from "../units/units.js";
-import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { highAlertWarning, validatePositiveFieldEntries, volumeWarnings } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
 
 export function calculateDose(input) {
-  const errors = validatePositiveFields([
-    { label: bg.fields.prescribedDose, value: input.requiredDose },
-    { label: bg.fields.availableAmount, value: input.availableAmount },
-    { label: bg.fields.availableVolume, value: input.availableVolume },
+  const fieldErrors = validatePositiveFieldEntries([
+    { name: "requiredDose", label: bg.fields.prescribedDose, value: input.requiredDose },
+    { name: "availableAmount", label: bg.fields.availableAmount, value: input.availableAmount },
+    { name: "availableVolume", label: bg.fields.availableVolume, value: input.availableVolume },
   ]);
 
-  if (errors.length) {
-    return { ok: false, errors };
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
   const requiredMg = toMg(input.requiredDose, input.requiredDoseUnit);

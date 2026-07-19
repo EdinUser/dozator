@@ -74,6 +74,7 @@ renderApp();
 
 function renderApp() {
   app.innerHTML = `
+    <a class="skip-link" href="#screen">${bg.app.skipToContent}</a>
     <header class="app-header">
       <div class="container">
         <div class="d-flex align-items-center justify-content-between gap-3">
@@ -96,7 +97,7 @@ function renderApp() {
     </header>
 
     <main class="container app-main">
-      <section id="screen"></section>
+      <section id="screen" tabindex="-1"></section>
     </main>
 
     ${renderLabelModal()}
@@ -154,6 +155,7 @@ function wireEvents() {
   app.addEventListener("click", handleClick);
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
+  app.addEventListener("input", handleInput);
 }
 
 function handleClick(event) {
@@ -283,6 +285,7 @@ function handleSubmit(event) {
 
   event.preventDefault();
   const form = event.target;
+  clearFieldErrors(form);
   const values = Object.fromEntries(new FormData(form).entries());
   values.highAlert = form.querySelector("[name='highAlert']")?.checked ?? false;
 
@@ -297,11 +300,14 @@ function handleSubmit(event) {
     form.insertAdjacentHTML("beforebegin", collapsedInputSummary(activeCalculator, values));
     form.classList.add("is-collapsed");
     form.setAttribute("aria-expanded", "false");
+    focusResult();
     return;
   }
 
   form.classList.remove("is-collapsed");
   form.setAttribute("aria-expanded", "true");
+  applyFieldErrors(form, result.fieldErrors || []);
+  focusFirstError(form);
 }
 
 function handleFavoriteSubmit(event) {
@@ -319,6 +325,12 @@ function handleFavoriteSubmit(event) {
 function handleChange(event) {
   if (event.target.matches("[name='mode']")) {
     updateModePanels(event.target.value);
+  }
+}
+
+function handleInput(event) {
+  if (event.target.matches("[data-form] .form-control")) {
+    clearFieldError(event.target);
   }
 }
 
@@ -382,6 +394,7 @@ function loadCalculation(calculator, values, options = {}) {
     form.classList.add("is-collapsed");
     form.setAttribute("aria-expanded", "false");
   }
+  focusResult();
 }
 
 function loadSharedCalculation() {
@@ -425,6 +438,74 @@ function restoreFormValues(values) {
   if (mode) {
     updateModePanels(mode);
   }
+}
+
+function clearFieldErrors(form) {
+  form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
+    clearFieldError(field);
+  });
+
+  form.querySelectorAll(".field-row.has-error").forEach((row) => row.classList.remove("has-error"));
+  form.querySelectorAll(".field-error").forEach((error) => {
+    error.textContent = "";
+  });
+}
+
+function clearFieldError(field) {
+  field.removeAttribute("aria-invalid");
+  field.classList.remove("is-invalid");
+
+  const describedBy = (field.getAttribute("aria-describedby") || "")
+    .split(/\s+/)
+    .filter((id) => id && !id.endsWith("Error"))
+    .join(" ");
+
+  if (describedBy) {
+    field.setAttribute("aria-describedby", describedBy);
+  } else {
+    field.removeAttribute("aria-describedby");
+  }
+
+  const error = document.querySelector(`#${field.name}Error`);
+  error?.closest(".field-row")?.classList.remove("has-error");
+
+  if (error) {
+    error.textContent = "";
+  }
+}
+
+function applyFieldErrors(form, fieldErrors) {
+  fieldErrors.forEach((fieldError) => {
+    const field = form.querySelector(`[name="${fieldError.name}"]`);
+    const error = form.querySelector(`#${fieldError.name}Error`);
+
+    if (!field || !error) {
+      return;
+    }
+
+    const describedBy = new Set((field.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean));
+    describedBy.add(error.id);
+    field.setAttribute("aria-describedby", [...describedBy].join(" "));
+    field.setAttribute("aria-invalid", "true");
+    field.classList.add("is-invalid");
+    error.textContent = fieldError.message;
+    error.closest(".field-row")?.classList.add("has-error");
+  });
+}
+
+function focusFirstError(form) {
+  const firstInvalidField = form.querySelector("[aria-invalid='true']");
+
+  if (firstInvalidField) {
+    firstInvalidField.focus();
+    return;
+  }
+
+  focusResult();
+}
+
+function focusResult() {
+  document.querySelector("[data-result-panel]")?.focus({ preventScroll: false });
 }
 
 function collapsedInputSummary(key, values) {

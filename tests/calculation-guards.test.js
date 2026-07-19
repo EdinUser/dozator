@@ -66,6 +66,7 @@ describe("dose calculation guards", () => {
     });
 
     expect(result.ok).toBe(false);
+    expect(result.fieldErrors[0]).toMatchObject({ name: "requiredDose" });
   });
 });
 
@@ -136,6 +137,7 @@ describe("dilution calculation guards", () => {
 
     const result = calculateDilution({ ...input, [field]: value });
     expect(result.ok).toBe(false);
+    expect(result.fieldErrors[0]).toMatchObject({ name: field });
   });
 });
 
