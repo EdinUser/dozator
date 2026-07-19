@@ -8,14 +8,15 @@ import {
   toMl,
 } from "../units/units.js";
 import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { bg } from "../i18n/bg.js";
 
 export function calculateDilution(input) {
   const errors = validatePositiveFields([
-    { label: "Налична концентрация - количество", value: input.availableAmount },
-    { label: "Налична концентрация - обем", value: input.availableVolume },
-    { label: "Желана концентрация - количество", value: input.targetAmount },
-    { label: "Желана концентрация - обем", value: input.targetVolume },
-    { label: "Краен обем", value: input.finalVolume },
+    { label: bg.fields.availableConcentrationAmount, value: input.availableAmount },
+    { label: bg.fields.availableConcentrationVolume, value: input.availableVolume },
+    { label: bg.fields.targetConcentrationAmount, value: input.targetAmount },
+    { label: bg.fields.targetConcentrationVolume, value: input.targetVolume },
+    { label: bg.fields.finalVolume, value: input.finalVolume },
   ]);
 
   if (errors.length) {
@@ -29,7 +30,7 @@ export function calculateDilution(input) {
   if (targetMgPerMl > availableMgPerMl) {
     return {
       ok: false,
-      errors: ["Желаната концентрация е по-висока от наличната. Това не може да се получи чрез разреждане."],
+      errors: [bg.calculations.dilution.impossibleTarget],
     };
   }
 
@@ -40,7 +41,7 @@ export function calculateDilution(input) {
   if (medicationMl > finalMl) {
     return {
       ok: false,
-      errors: ["Необходимият обем от лекарството е по-голям от крайния обем."],
+      errors: [bg.calculations.dilution.medicationVolumeGreaterThanFinal],
     };
   }
 
@@ -53,12 +54,16 @@ export function calculateDilution(input) {
     ok: true,
     primary: formatVolumeMl(medicationMl),
     instructions: [
-      `Изтеглете ${formatVolumeMl(medicationMl)} от първоначалния разтвор.`,
-      `Добавете ${formatVolumeMl(diluentMl)} от посочения разтворител.`,
-      `Краен обем: ${formatVolumeMl(finalMl)}.`,
-      `Крайна концентрация: ${formatConcentrationMgPerMl(targetMgPerMl)}.`,
+      bg.calculations.dilution.withdraw(formatVolumeMl(medicationMl)),
+      bg.calculations.dilution.addDiluent(formatVolumeMl(diluentMl)),
+      bg.calculations.dilution.finalVolume(formatVolumeMl(finalMl)),
+      bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl)),
     ],
-    finalLines: [`Общо количество: ${formatMassMg(totalMg)}`, `Краен обем: ${formatVolumeMl(finalMl)}`, `Крайна концентрация: ${formatConcentrationMgPerMl(targetMgPerMl)}`],
+    finalLines: [
+      bg.calculations.dilution.totalAmount(formatMassMg(totalMg)),
+      bg.calculations.dilution.finalVolumeLine(formatVolumeMl(finalMl)),
+      bg.calculations.dilution.finalConcentrationLine(formatConcentrationMgPerMl(targetMgPerMl)),
+    ],
     notices,
     traces: [
       `${formatConcentrationMgPerMl(availableMgPerMl)} × ${formatVolumeMl(medicationMl)} = ${formatMassMg(totalMg)}`,
@@ -69,7 +74,7 @@ export function calculateDilution(input) {
       totalAmount: formatMassMg(totalMg),
       finalVolume: formatVolumeMl(finalMl),
       concentration: `${formatNumber(targetMgPerMl)} mg/mL`,
-      recipe: `Изтеглете ${formatVolumeMl(medicationMl)} лекарство. Добавете ${formatVolumeMl(diluentMl)} разтворител.`,
+      recipe: bg.calculations.dilution.recipe(formatVolumeMl(medicationMl), formatVolumeMl(diluentMl)),
     },
   };
 }

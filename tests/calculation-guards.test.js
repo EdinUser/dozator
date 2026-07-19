@@ -51,7 +51,7 @@ describe("dose calculation guards", () => {
 
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("1 mL");
-    expect(result.warnings[0]).toContain("High-alert медикамент");
+    expect(result.warnings[0]).toContain("Високорисков медикамент");
   });
 
   it.each(["0", "-1", "", " "])("rejects invalid required dose %s", (requiredDose) => {

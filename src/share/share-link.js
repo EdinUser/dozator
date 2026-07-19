@@ -1,12 +1,53 @@
 const shareVersion = 1;
 const sharePrefix = "calc=";
+const shareFields = {
+  dose: ["requiredDose", "requiredDoseUnit", "availableAmount", "availableAmountUnit", "availableVolume", "availableVolumeUnit", "highAlert"],
+  dilution: [
+    "availableAmount",
+    "availableAmountUnit",
+    "availableVolume",
+    "availableVolumeUnit",
+    "targetAmount",
+    "targetAmountUnit",
+    "targetVolume",
+    "targetVolumeUnit",
+    "finalVolume",
+    "finalVolumeUnit",
+    "highAlert",
+  ],
+  reconstitution: [
+    "vialAmount",
+    "vialAmountUnit",
+    "diluentVolume",
+    "diluentVolumeUnit",
+    "finalVolume",
+    "finalVolumeUnit",
+    "requiredDose",
+    "requiredDoseUnit",
+    "highAlert",
+  ],
+  infusion: [
+    "mode",
+    "medicationAmount",
+    "medicationAmountUnit",
+    "finalVolume",
+    "finalVolumeUnit",
+    "prescribedRate",
+    "prescribedRateUnit",
+    "volume",
+    "volumeUnit",
+    "time",
+    "timeUnit",
+    "highAlert",
+  ],
+};
 
 export function buildShareUrl(calculatorKey, values) {
   const url = new URL(window.location.href);
   url.hash = `${sharePrefix}${encodePayload({
     v: shareVersion,
     calculator: calculatorKey,
-    values,
+    values: shareableValues(calculatorKey, values),
   })}`;
   return url.toString();
 }
@@ -25,7 +66,10 @@ export function readSharedCalculation(hashValue = window.location.hash) {
       return null;
     }
 
-    return payload;
+    return {
+      ...payload,
+      values: shareableValues(payload.calculator, payload.values),
+    };
   } catch {
     return null;
   }
@@ -33,4 +77,8 @@ export function readSharedCalculation(hashValue = window.location.hash) {
 
 function encodePayload(payload) {
   return btoa(encodeURIComponent(JSON.stringify(payload)));
+}
+
+export function shareableValues(calculatorKey, values) {
+  return Object.fromEntries((shareFields[calculatorKey] || []).filter((field) => field in values).map((field) => [field, values[field]]));
 }

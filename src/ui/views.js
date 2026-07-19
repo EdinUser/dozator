@@ -1,14 +1,16 @@
+import { bg } from "../i18n/bg.js";
+
 export function renderHomeScreen() {
   return `
     <section class="home-screen">
       <div class="mb-4">
-        <h1>Какво подготвяте?</h1>
+        <h1>${bg.home.title}</h1>
       </div>
       <div class="action-grid">
-        ${homeButton("dose", "Доза от готов разтвор", "Колко mL да се изтеглят")}
-        ${homeButton("dilution", "Разреждане до концентрация", "Колко лекарство и разтворител")}
-        ${homeButton("reconstitution", "Разтваряне на флакон", "Крайна концентрация и обем")}
-        ${homeButton("infusion", "Инфузионна скорост", "mL/h по доза или време")}
+        ${homeButton("dose", bg.calculators.dose.title, bg.calculators.dose.homeDescription)}
+        ${homeButton("dilution", bg.calculators.dilution.title, bg.calculators.dilution.homeDescription)}
+        ${homeButton("reconstitution", bg.calculators.reconstitution.title, bg.calculators.reconstitution.homeDescription)}
+        ${homeButton("infusion", bg.calculators.infusion.title, bg.calculators.infusion.homeDescription)}
       </div>
     </section>
   `;
@@ -16,26 +18,53 @@ export function renderHomeScreen() {
 
 export function renderMenuItems() {
   return `
-    ${menuButton("dose", "Доза от готов разтвор", "Обем за изтегляне")}
-    ${menuButton("dilution", "Разреждане до концентрация", "Лекарство плюс разтворител")}
-    ${menuButton("reconstitution", "Разтваряне на флакон", "Концентрация след разтваряне")}
-    ${menuButton("infusion", "Инфузионна скорост", "Скорост на помпа")}
+    ${menuButton("dose", bg.calculators.dose.title, bg.calculators.dose.menuDescription)}
+    ${menuButton("dilution", bg.calculators.dilution.title, bg.calculators.dilution.menuDescription)}
+    ${menuButton("reconstitution", bg.calculators.reconstitution.title, bg.calculators.reconstitution.menuDescription)}
+    ${menuButton("infusion", bg.calculators.infusion.title, bg.calculators.infusion.menuDescription)}
   `;
 }
 
 export function renderCalculatorScreen(calculator) {
   return `
     <section class="calculator-screen">
-      <button type="button" class="btn btn-link px-0 mb-3" data-action="home">Назад</button>
+      <button type="button" class="btn btn-link px-0 mb-3" data-action="home">${bg.actions.back}</button>
       <div class="section-heading">
         <div class="section-title">
           <h1>${calculator.title}</h1>
           <p>${calculator.subtitle}</p>
         </div>
-        <button type="button" class="btn btn-outline-primary btn-sm calculator-history-button" data-action="show-calculator-history">История</button>
+        <button type="button" class="btn btn-outline-primary btn-sm calculator-history-button" data-action="show-calculator-history">${bg.actions.history}</button>
       </div>
       ${formTemplates[calculator.render]()}
       <div id="result" class="mt-4"></div>
+    </section>
+  `;
+}
+
+export function renderClinicalValidationScreen() {
+  return `
+    <section class="calculator-screen">
+      <button type="button" class="btn btn-link px-0 mb-3" data-action="home">${bg.actions.back}</button>
+      <div class="section-heading">
+        <div class="section-title">
+          <h1>${bg.validation.title}</h1>
+          <p>${bg.validation.intro}</p>
+        </div>
+      </div>
+      <div class="validation-list">
+        ${bg.validation.sections
+          .map(
+            (section) => `
+              <section class="result-block">
+                <h2>${section.title}</h2>
+                ${section.lines.map((line) => `<p>${line}</p>`).join("")}
+              </section>
+            `,
+          )
+          .join("")}
+      </div>
+      <p class="form-text">${bg.validation.documentNote}</p>
     </section>
   `;
 }
@@ -52,26 +81,34 @@ export function renderResultPanel(result) {
   return `
     <section class="result-panel" aria-live="polite">
       <div class="result-primary">
-        <span>Резултат</span>
+        <span>${bg.result.title}</span>
         <strong>${result.primary}</strong>
       </div>
       ${result.warnings.length ? `<div class="alert alert-warning">${result.warnings.map((warning) => `<div>${warning}</div>`).join("")}</div>` : ""}
       ${result.notices?.length ? renderNoticeBlock(result.notices) : ""}
       <div class="result-block">
-        <h2>Подготовка</h2>
+        <h2>${bg.result.preparation}</h2>
         ${result.instructions.map((line) => `<p>${line}</p>`).join("")}
       </div>
       <div class="result-block">
-        <h2>Проверка</h2>
+        <h2>${bg.result.verification}</h2>
         ${result.traces.map((line) => `<code>${line}</code>`).join("")}
       </div>
       <div class="result-actions">
-        <button type="button" class="btn btn-outline-secondary btn-lg" data-action="start-over">Ново</button>
-        <button type="button" class="btn btn-outline-primary btn-lg" data-action="share-calculation">QR код</button>
-        <button type="button" class="btn btn-outline-primary btn-lg" data-action="save-favorite">Запази</button>
-        <button type="button" class="btn btn-primary btn-lg" data-action="create-label">Етикет</button>
+        <button type="button" class="btn btn-outline-secondary btn-lg" data-action="start-over">${bg.actions.newCalculation}</button>
+        <button type="button" class="btn btn-outline-primary btn-lg" data-action="share-calculation">${bg.actions.shareQr}</button>
+        <button type="button" class="btn btn-outline-primary btn-lg" data-action="save-favorite">${bg.actions.save}</button>
+        <button type="button" class="btn btn-primary btn-lg" data-action="create-label">${bg.actions.createLabel}</button>
       </div>
     </section>
+  `;
+}
+
+export function renderRestoreWarning() {
+  return `
+    <div class="alert alert-warning restore-warning" role="alert">
+      ${bg.safety.restoredCalculation}
+    </div>
   `;
 }
 
@@ -81,15 +118,15 @@ export function renderLabelModal() {
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="labelModalTitle">Етикет за подготовка</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Затвори"></button>
+            <h2 class="modal-title fs-5" id="labelModalTitle">${bg.label.title}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${bg.actions.close}"></button>
           </div>
           <div class="modal-body">
             <pre class="label-output" id="labelOutput"></pre>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-action="copy-label">Копирай</button>
-            <button type="button" class="btn btn-primary" data-action="print-label">Печат</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="copy-label">${bg.actions.copy}</button>
+            <button type="button" class="btn btn-primary" data-action="print-label">${bg.actions.print}</button>
           </div>
         </div>
       </div>
@@ -103,20 +140,21 @@ export function renderShareModal() {
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="shareModalTitle">QR код за изчислението</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Затвори"></button>
+            <h2 class="modal-title fs-5" id="shareModalTitle">${bg.sharing.title}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${bg.actions.close}"></button>
           </div>
           <div class="modal-body">
-            <p class="share-help">Сканирането отваря същото изчисление и го преизчислява в браузъра.</p>
+            <p class="share-help">${bg.sharing.help}</p>
+            <p class="share-help">${bg.sharing.disclaimer}</p>
             <div class="qr-frame">
-              <canvas id="shareQrCanvas" width="256" height="256" aria-label="QR код"></canvas>
+              <canvas id="shareQrCanvas" width="256" height="256" aria-label="${bg.sharing.qrAriaLabel}"></canvas>
             </div>
-            <label class="form-label mt-3" for="shareUrl">Връзка</label>
+            <label class="form-label mt-3" for="shareUrl">${bg.sharing.urlLabel}</label>
             <textarea class="form-control share-url" id="shareUrl" rows="3" readonly></textarea>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-action="copy-share-link">Копирай връзка</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Готово</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="copy-share-link">${bg.actions.copyLink}</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">${bg.actions.done}</button>
           </div>
         </div>
       </div>
@@ -130,10 +168,13 @@ export function renderHistoryModal() {
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="historyModalTitle">История</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Затвори"></button>
+            <h2 class="modal-title fs-5" id="historyModalTitle">${bg.storage.historyTitle}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${bg.actions.close}"></button>
           </div>
           <div class="modal-body" id="historyList"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-danger" data-action="clear-history">${bg.storage.clearHistory}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -146,8 +187,8 @@ export function renderFavoritesModal() {
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="favoritesModalTitle">Запазени изчисления</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Затвори"></button>
+            <h2 class="modal-title fs-5" id="favoritesModalTitle">${bg.storage.favoritesTitle}</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${bg.actions.close}"></button>
           </div>
           <div class="modal-body" id="favoritesList"></div>
         </div>
@@ -163,17 +204,17 @@ export function renderFavoriteNameModal() {
         <div class="modal-content">
           <form data-favorite-form>
             <div class="modal-header">
-              <h2 class="modal-title fs-5" id="favoriteNameModalTitle">Запази изчисление</h2>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Затвори"></button>
+              <h2 class="modal-title fs-5" id="favoriteNameModalTitle">${bg.storage.favoriteModalTitle}</h2>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${bg.actions.close}"></button>
             </div>
             <div class="modal-body">
-              <label class="form-label" for="favoriteName">Име по желание</label>
-              <input class="form-control form-control-lg" id="favoriteName" name="favoriteName" type="text" autocomplete="off" placeholder="например: честа подготовка">
-              <div class="form-text">Не въвеждайте лични данни на пациент.</div>
+              <label class="form-label" for="favoriteName">${bg.storage.favoriteNameLabel}</label>
+              <input class="form-control form-control-lg" id="favoriteName" name="favoriteName" type="text" autocomplete="off" placeholder="${bg.storage.favoriteNamePlaceholder}">
+              <div class="form-text">${bg.storage.noPatientData}</div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отказ</button>
-              <button type="submit" class="btn btn-primary">Запази</button>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">${bg.actions.cancel}</button>
+              <button type="submit" class="btn btn-primary">${bg.actions.save}</button>
             </div>
           </form>
         </div>
@@ -196,7 +237,7 @@ export function renderStoredList(entries, emptyText, calculatorTitles = {}) {
 
 export function renderGroupedFavorites(entries, calculatorTitles) {
   if (!entries.length) {
-    return `<p class="empty-state">Няма запазени изчисления.</p>`;
+    return `<p class="empty-state">${bg.storage.noFavorites}</p>`;
   }
 
   const groups = entries.reduce((grouped, entry) => {
@@ -221,7 +262,7 @@ export function renderGroupedFavorites(entries, calculatorTitles) {
 
 export function renderHistoryAccordion(entries, calculatorTitles) {
   if (!entries.length) {
-    return `<p class="empty-state">Няма последни изчисления.</p>`;
+    return `<p class="empty-state">${bg.storage.noHistory}</p>`;
   }
 
   const groups = entries.reduce((grouped, entry) => {
@@ -245,15 +286,13 @@ export function renderAcknowledgement() {
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="safetyModalTitle">Преди употреба</h2>
+            <h2 class="modal-title fs-5" id="safetyModalTitle">${bg.safety.firstUseTitle}</h2>
           </div>
           <div class="modal-body">
-            <p>Използвайте само ако сте обучен медицински специалист.</p>
-            <p>Проверете назначението, продукта, концентрацията и протокола независимо.</p>
-            <p>Дозатор не препоръчва лекарство, доза, разтворител или срок на годност.</p>
+            ${bg.safety.firstUseLines.map((line) => `<p>${line}</p>`).join("")}
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary btn-lg w-100" data-bs-dismiss="modal" data-action="acknowledge">Разбирам</button>
+            <button type="button" class="btn btn-primary btn-lg w-100" data-bs-dismiss="modal" data-action="acknowledge">${bg.safety.acknowledge}</button>
           </div>
         </div>
       </div>
@@ -271,8 +310,8 @@ function storedItem(entry, options = {}) {
         <time>${formatStoredTime(entry.createdAt)}</time>
       </div>
       <div class="stored-actions">
-        <button type="button" class="btn btn-sm btn-outline-primary" data-action="open-stored" data-stored-id="${entry.id}">Отвори</button>
-        ${options.canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-favorite" data-stored-id="${entry.id}">Изтрий</button>` : ""}
+        <button type="button" class="btn btn-sm btn-outline-primary" data-action="open-stored" data-stored-id="${entry.id}">${bg.actions.open}</button>
+        ${options.canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-favorite" data-stored-id="${entry.id}">${bg.actions.delete}</button>` : ""}
       </div>
     </article>
   `;
@@ -316,16 +355,16 @@ export function labelText(result, diluent) {
   }).format(new Date());
 
   return [
-    "Лекарство: __________",
-    `Общо количество: ${result.label.totalAmount || "__________"}`,
-    `Краен обем: ${result.label.finalVolume || "__________"}`,
-    `Концентрация: ${result.label.concentration || "__________"}`,
-    `Разтворител: ${diluent}`,
-    `Подготвено: ${preparedAt}`,
-    "Подготвено от: __________",
-    "Проверено от: __________",
+    bg.label.medication,
+    bg.label.totalAmount(result.label.totalAmount),
+    bg.label.finalVolume(result.label.finalVolume),
+    bg.label.concentration(result.label.concentration),
+    bg.label.diluent(diluent),
+    bg.label.preparedAt(preparedAt),
+    bg.label.preparedBy,
+    bg.label.checkedBy,
     "",
-    "Подготовка:",
+    bg.label.recipeTitle,
     result.label.recipe,
   ].join("\n");
 }
@@ -347,13 +386,13 @@ function renderDoseForm() {
   return `
     <form class="calculator-form" data-form>
       <fieldset>
-        <legend>Назначена доза</legend>
-        ${numberWithUnit("requiredDose", "Доза", "125", ["g", "mg", "µg"], "mg")}
+        <legend>${bg.forms.dose.prescribedDose}</legend>
+        ${numberWithUnit("requiredDose", bg.forms.dose.dose, "125", ["g", "mg", "µg"], "mg")}
       </fieldset>
       <fieldset>
-        <legend>Наличен разтвор</legend>
-        ${numberWithUnit("availableAmount", "Количество", "250", ["g", "mg", "µg"], "mg")}
-        ${numberWithUnit("availableVolume", "В обем", "5", ["L", "mL"], "mL")}
+        <legend>${bg.forms.dose.availableSolution}</legend>
+        ${numberWithUnit("availableAmount", bg.forms.dose.amount, "250", ["g", "mg", "µg"], "mg")}
+        ${numberWithUnit("availableVolume", bg.forms.dose.inVolume, "5", ["L", "mL"], "mL")}
       </fieldset>
       ${highAlertToggle()}
       ${submitButton()}
@@ -365,16 +404,16 @@ function renderDilutionForm() {
   return `
     <form class="calculator-form" data-form>
       <fieldset>
-        <legend>Налична концентрация</legend>
+        <legend>${bg.forms.dilution.availableConcentration}</legend>
         ${concentrationFields("available", "10", "1")}
       </fieldset>
       <fieldset>
-        <legend>Желана концентрация</legend>
+        <legend>${bg.forms.dilution.targetConcentration}</legend>
         ${concentrationFields("target", "2", "1")}
       </fieldset>
       <fieldset>
-        <legend>Крайно количество</legend>
-        ${numberWithUnit("finalVolume", "Краен обем", "20", ["L", "mL"], "mL")}
+        <legend>${bg.forms.dilution.finalQuantity}</legend>
+        ${numberWithUnit("finalVolume", bg.forms.dilution.finalVolume, "20", ["L", "mL"], "mL")}
       </fieldset>
       ${diluentField()}
       ${highAlertToggle()}
@@ -387,17 +426,17 @@ function renderReconstitutionForm() {
   return `
     <form class="calculator-form" data-form>
       <fieldset>
-        <legend>Флакон</legend>
-        ${numberWithUnit("vialAmount", "Количество лекарство във флакона", "1", ["g", "mg", "µg"], "g")}
+        <legend>${bg.forms.reconstitution.vial}</legend>
+        ${numberWithUnit("vialAmount", bg.forms.reconstitution.vialAmount, "1", ["g", "mg", "µg"], "g")}
       </fieldset>
       <fieldset>
-        <legend>Разтваряне на праха</legend>
-        ${numberWithUnit("diluentVolume", "Обем добавен разтворител", "10", ["L", "mL"], "mL")}
-        ${numberWithUnit("finalVolume", "Краен обем след разтваряне", "10", ["L", "mL"], "mL")}
+        <legend>${bg.forms.reconstitution.powderDissolving}</legend>
+        ${numberWithUnit("diluentVolume", bg.forms.reconstitution.diluentVolume, "10", ["L", "mL"], "mL")}
+        ${numberWithUnit("finalVolume", bg.forms.reconstitution.finalVolumeAfterDissolving, "10", ["L", "mL"], "mL")}
       </fieldset>
       <fieldset>
-        <legend>Ако трябва конкретна доза</legend>
-        ${numberWithUnit("requiredDose", "Доза, която трябва да се изтегли", "", ["g", "mg", "µg"], "mg", false)}
+        <legend>${bg.forms.reconstitution.optionalDose}</legend>
+        ${numberWithUnit("requiredDose", bg.forms.reconstitution.doseToWithdraw, "", ["g", "mg", "µg"], "mg", false)}
       </fieldset>
       ${diluentField()}
       ${highAlertToggle()}
@@ -410,28 +449,34 @@ function renderInfusionForm() {
   return `
     <form class="calculator-form" data-form>
       <fieldset>
-        <legend>Режим</legend>
-        <div class="segmented" role="radiogroup" aria-label="Режим за инфузионна скорост">
+        <legend>${bg.forms.infusion.mode}</legend>
+        <div class="infusion-mode-options" role="radiogroup" aria-label="${bg.forms.infusion.modeAriaLabel}">
           <input class="btn-check" type="radio" name="mode" id="mode-dose" value="doseRate" checked>
-          <label class="btn btn-outline-primary" for="mode-dose">По доза</label>
+          <label class="infusion-mode-option" for="mode-dose">
+            <strong>${bg.forms.infusion.doseRateMode}</strong>
+            <small>${bg.forms.infusion.doseRateDescription}</small>
+          </label>
           <input class="btn-check" type="radio" name="mode" id="mode-time" value="volumeTime">
-          <label class="btn btn-outline-primary" for="mode-time">По време</label>
+          <label class="infusion-mode-option" for="mode-time">
+            <strong>${bg.forms.infusion.volumeTimeMode}</strong>
+            <small>${bg.forms.infusion.volumeTimeDescription}</small>
+          </label>
         </div>
       </fieldset>
       <div data-mode-panel="doseRate">
         <fieldset>
-          <legend>Инфузия</legend>
-          ${numberWithUnit("medicationAmount", "Количество лекарство", "500", ["g", "mg", "µg"], "mg")}
-          ${numberWithUnit("finalVolume", "Краен обем", "250", ["L", "mL"], "mL")}
-          ${numberWithUnit("prescribedRate", "Назначена скорост", "25", ["mg/h", "µg/h"], "mg/h")}
+          <legend>${bg.forms.infusion.infusion}</legend>
+          ${numberWithUnit("medicationAmount", bg.forms.infusion.medicationAmount, "500", ["g", "mg", "µg"], "mg")}
+          ${numberWithUnit("finalVolume", bg.forms.infusion.finalVolume, "250", ["L", "mL"], "mL")}
+          ${numberWithUnit("prescribedRate", bg.forms.infusion.prescribedRate, "25", ["mg/h", "µg/h"], "mg/h")}
         </fieldset>
         ${highAlertToggle()}
       </div>
       <div data-mode-panel="volumeTime" hidden>
         <fieldset>
-          <legend>Обем и време</legend>
-          ${numberWithUnit("volume", "Обем", "500", ["L", "mL"], "mL")}
-          ${numberWithUnit("time", "Време", "4", ["h", "min"], "h")}
+          <legend>${bg.forms.infusion.volumeTime}</legend>
+          ${numberWithUnit("volume", bg.forms.infusion.volume, "500", ["L", "mL"], "mL")}
+          ${numberWithUnit("time", bg.forms.infusion.time, "4", ["h", "min"], "h")}
         </fieldset>
       </div>
       ${submitButton()}
@@ -450,8 +495,8 @@ function homeButton(key, title, text) {
 
 function concentrationFields(prefix, amountValue, volumeValue) {
   return `
-    ${numberWithUnit(`${prefix}Amount`, "Количество", amountValue, ["g", "mg", "µg"], "mg")}
-    ${numberWithUnit(`${prefix}Volume`, "В обем", volumeValue, ["L", "mL"], "mL")}
+    ${numberWithUnit(`${prefix}Amount`, bg.forms.dose.amount, amountValue, ["g", "mg", "µg"], "mg")}
+    ${numberWithUnit(`${prefix}Volume`, bg.forms.dose.inVolume, volumeValue, ["L", "mL"], "mL")}
   `;
 }
 
@@ -461,7 +506,7 @@ function numberWithUnit(name, label, value, units, selectedUnit, required = true
       <label class="form-label" for="${name}">${label}</label>
       <div class="input-group input-group-lg">
         <input class="form-control" id="${name}" name="${name}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([\\.,][0-9]+)?" value="${value}" ${required ? "required" : ""}>
-        <select class="form-select unit-select" name="${name}Unit" aria-label="${label} единица">
+        <select class="form-select unit-select" name="${name}Unit" aria-label="${bg.forms.common.unitAriaLabel(label)}">
           ${units.map((unit) => `<option value="${unit}" ${unit === selectedUnit ? "selected" : ""}>${unit}</option>`).join("")}
         </select>
       </div>
@@ -473,7 +518,7 @@ function highAlertToggle() {
   return `
     <div class="form-check form-switch high-alert">
       <input class="form-check-input" type="checkbox" role="switch" name="highAlert" id="highAlert">
-      <label class="form-check-label" for="highAlert">Високорисков медикамент</label>
+      <label class="form-check-label" for="highAlert">${bg.forms.common.highAlertLabel}</label>
     </div>
   `;
 }
@@ -481,21 +526,21 @@ function highAlertToggle() {
 function diluentField() {
   return `
     <div class="field-row">
-      <label class="form-label" for="diluent">Име на използвания разтворител</label>
-      <input class="form-control form-control-lg" id="diluent" name="diluent" type="text" autocomplete="off" placeholder="попълва се от инструкция, аптека или протокол">
+      <label class="form-label" for="diluent">${bg.forms.common.diluentLabel}</label>
+      <input class="form-control form-control-lg" id="diluent" name="diluent" type="text" autocomplete="off" placeholder="${bg.forms.common.diluentPlaceholder}">
     </div>
   `;
 }
 
 function submitButton() {
-  return `<button type="submit" class="btn btn-primary btn-lg w-100 calculate-button">Изчисли</button>`;
+  return `<button type="submit" class="btn btn-primary btn-lg w-100 calculate-button">${bg.actions.calculate}</button>`;
 }
 
 function renderNoticeBlock(notices) {
   return `
     <div class="result-block conversion-block">
-      <h2>Преобразуване</h2>
-      <div class="conversion-notice">Единиците са преобразувани за изчислението.</div>
+      <h2>${bg.result.conversionTitle}</h2>
+      <div class="conversion-notice">${bg.result.conversionNotice}</div>
       ${notices.map((line) => `<code>${line}</code>`).join("")}
     </div>
   `;
