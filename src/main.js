@@ -15,17 +15,20 @@ import {
   renderGroupedFavorites,
   renderHistoryAccordion,
   renderHistoryModal,
+  renderClinicalValidationScreen,
   renderHomeScreen,
   renderMenuItems,
   renderLabelModal,
+  renderRestoreWarning,
   renderStoredList,
   renderResultPanel,
   renderShareModal,
   updateModePanels,
 } from "./ui/views.js";
 import { buildShareUrl, readSharedCalculation } from "./share/share-link.js";
-import { deleteFavorite, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "./storage/calculation-store.js";
+import { clearHistory, deleteFavorite, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "./storage/calculation-store.js";
 import { calculationSummary } from "./storage/summaries.js";
+import { bg } from "./i18n/bg.js";
 
 const acknowledgementKey = "dozator-safety-acknowledged";
 const themeKey = "dozator-theme";
@@ -38,29 +41,30 @@ let shareModal = null;
 let historyModal = null;
 let favoritesModal = null;
 let favoriteNameModal = null;
+let currentHistoryCalculator = null;
 
 const calculators = {
   dose: {
-    title: "Доза от готов разтвор",
-    subtitle: "Изчислява обема за изтегляне от налична концентрация.",
+    title: bg.calculators.dose.title,
+    subtitle: bg.calculators.dose.subtitle,
     render: "dose",
     calculate: calculateDose,
   },
   dilution: {
-    title: "Разреждане до концентрация",
-    subtitle: "Изчислява лекарство и разтворител за желана крайна концентрация.",
+    title: bg.calculators.dilution.title,
+    subtitle: bg.calculators.dilution.subtitle,
     render: "dilution",
     calculate: calculateDilution,
   },
   reconstitution: {
-    title: "Разтваряне на флакон",
-    subtitle: "Изчислява концентрация след разтваряне и обем за изтегляне.",
+    title: bg.calculators.reconstitution.title,
+    subtitle: bg.calculators.reconstitution.subtitle,
     render: "reconstitution",
     calculate: calculateReconstitution,
   },
   infusion: {
-    title: "Инфузионна скорост",
-    subtitle: "Изчислява mL/h по доза или по обем и време.",
+    title: bg.calculators.infusion.title,
+    subtitle: bg.calculators.infusion.subtitle,
     render: "infusion",
     calculate: calculateInfusion,
   },
@@ -73,17 +77,20 @@ function renderApp() {
     <header class="app-header">
       <div class="container">
         <div class="d-flex align-items-center justify-content-between gap-3">
-          <button class="brand-button" type="button" data-action="home" aria-label="Начало">Дозатор</button>
+          <button class="brand-button" type="button" data-action="home" aria-label="${bg.app.home}">
+            <img class="brand-icon" src="/favicon.svg" alt="" aria-hidden="true">
+            <span>${bg.app.name}</span>
+          </button>
           <div class="header-actions">
             <button class="btn btn-sm btn-light" type="button" data-action="toggle-theme" id="themeToggle"></button>
-            <button class="btn btn-sm btn-light fav-shortcut" type="button" data-action="show-favorites" aria-label="Запазени изчисления">☆</button>
-            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#appMenu" aria-controls="appMenu" aria-label="Меню">
-              Меню
+            <button class="btn btn-sm btn-light fav-shortcut" type="button" data-action="show-favorites" aria-label="${bg.storage.favoritesTitle}">☆</button>
+            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#appMenu" aria-controls="appMenu" aria-label="${bg.app.menu}">
+              ${bg.app.menu}
             </button>
           </div>
         </div>
         <div class="safety-strip mt-3" role="note">
-          Проверява аритметиката. Не замества назначение, инструкция на производителя, аптека или болничен протокол.
+          ${bg.app.safetyStrip}
         </div>
       </div>
     </header>
@@ -100,23 +107,30 @@ function renderApp() {
     ${renderAcknowledgement()}
     <div class="offcanvas offcanvas-end" tabindex="-1" id="appMenu" aria-labelledby="appMenuTitle">
       <div class="offcanvas-header">
-        <h2 class="offcanvas-title fs-5" id="appMenuTitle">Меню</h2>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Затвори"></button>
+        <h2 class="offcanvas-title fs-5" id="appMenuTitle">${bg.app.menu}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="${bg.actions.close}"></button>
       </div>
       <div class="offcanvas-body">
-        <div class="menu-section-title">Калкулатори</div>
+        <div class="menu-section-title">${bg.menu.calculators}</div>
         <div class="menu-list">
           ${renderMenuItems()}
         </div>
         <div class="menu-placeholder mt-4">
-          <div class="menu-section-title">Памет</div>
+          <div class="menu-section-title">${bg.menu.memory}</div>
           <button class="menu-item" type="button" data-action="show-history">
-            <span>История</span>
-            <small>Последните 10 за всеки калкулатор</small>
+            <span>${bg.actions.history}</span>
+            <small>${bg.menu.historyDescription}</small>
           </button>
           <button class="menu-item" type="button" data-action="show-favorites">
-            <span>Запазени</span>
-            <small>Често използвани изчисления</small>
+            <span>${bg.menu.savedTitle}</span>
+            <small>${bg.menu.savedDescription}</small>
+          </button>
+        </div>
+        <div class="menu-placeholder mt-4">
+          <div class="menu-section-title">${bg.menu.safetyAndValidation}</div>
+          <button class="menu-item" type="button" data-action="show-clinical-validation">
+            <span>${bg.menu.validationTitle}</span>
+            <small>${bg.menu.validationDescription}</small>
           </button>
         </div>
       </div>
@@ -220,6 +234,12 @@ function handleClick(event) {
     return;
   }
 
+  if (action === "clear-history") {
+    clearHistory(localStorage);
+    showHistory(currentHistoryCalculator);
+    return;
+  }
+
   if (action === "show-calculator-history" && activeCalculator) {
     showHistory(activeCalculator);
     return;
@@ -228,6 +248,15 @@ function handleClick(event) {
   if (action === "show-favorites") {
     hideOpenMenu();
     showFavorites();
+    return;
+  }
+
+  if (action === "show-clinical-validation") {
+    activeCalculator = null;
+    lastResult = null;
+    lastSubmittedValues = null;
+    hideOpenMenu();
+    renderClinicalValidation();
     return;
   }
 
@@ -301,6 +330,10 @@ function renderCalculator(key) {
   document.querySelector("#screen").innerHTML = renderCalculatorScreen(calculators[key]);
 }
 
+function renderClinicalValidation() {
+  document.querySelector("#screen").innerHTML = renderClinicalValidationScreen();
+}
+
 function openStoredEntry(id) {
   const entry = [...readHistory(localStorage), ...readFavorites(localStorage)].find((storedEntry) => storedEntry.id === id);
 
@@ -310,12 +343,13 @@ function openStoredEntry(id) {
 
   historyModal.hide();
   favoritesModal.hide();
-  loadCalculation(entry.calculator, entry.values);
+  loadCalculation(entry.calculator, entry.values, { restored: true });
 }
 
 function showHistory(calculator = null) {
-  const title = calculator ? `История: ${calculators[calculator].title}` : "История";
-  const emptyText = calculator ? "Няма последни изчисления за този калкулатор." : "Няма последни изчисления.";
+  currentHistoryCalculator = calculator;
+  const title = calculator ? bg.storage.historyForCalculator(calculators[calculator].title) : bg.storage.historyTitle;
+  const emptyText = calculator ? bg.storage.noCalculatorHistory : bg.storage.noHistory;
   document.querySelector("#historyModalTitle").textContent = title;
   document.querySelector("#historyList").innerHTML = calculator
     ? renderStoredList(readHistory(localStorage, calculator), emptyText, calculatorTitles())
@@ -332,7 +366,7 @@ function calculatorTitles() {
   return Object.fromEntries(Object.entries(calculators).map(([key, calculator]) => [key, calculator.title]));
 }
 
-function loadCalculation(calculator, values) {
+function loadCalculation(calculator, values, options = {}) {
   activeCalculator = calculator;
   lastSubmittedValues = values;
   renderCalculator(calculator);
@@ -340,7 +374,7 @@ function loadCalculation(calculator, values) {
 
   const result = calculators[calculator].calculate(values);
   lastResult = result.ok ? result : null;
-  document.querySelector("#result").innerHTML = renderResultPanel(result);
+  document.querySelector("#result").innerHTML = `${options.restored ? renderRestoreWarning() : ""}${renderResultPanel(result)}`;
 
   const form = document.querySelector("[data-form]");
   if (result.ok && form) {
@@ -358,7 +392,7 @@ function loadSharedCalculation() {
   }
 
   activeCalculator = shared.calculator;
-  loadCalculation(shared.calculator, shared.values);
+  loadCalculation(shared.calculator, shared.values, { restored: true });
 
   return true;
 }
@@ -394,24 +428,16 @@ function restoreFormValues(values) {
 }
 
 function collapsedInputSummary(key, values) {
-  const lines = {
-    dose: [`Доза: ${values.requiredDose} ${values.requiredDoseUnit}`, `Налично: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`],
-    dilution: [`Налично: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`, `Желано: ${values.targetAmount} ${values.targetAmountUnit} в ${values.targetVolume} ${values.targetVolumeUnit}`, `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`],
-    reconstitution: [`Флакон: ${values.vialAmount} ${values.vialAmountUnit}`, `Разтворител: ${values.diluentVolume} ${values.diluentVolumeUnit}`, `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`],
-    infusion:
-      values.mode === "volumeTime"
-        ? [`Обем: ${values.volume} ${values.volumeUnit}`, `Време: ${values.time} ${values.timeUnit}`]
-        : [`Количество: ${values.medicationAmount} ${values.medicationAmountUnit}`, `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`, `Скорост: ${values.prescribedRate} ${values.prescribedRateUnit}`],
-  }[key];
+  const lines = bg.inputSummary[key](values);
 
   return `
     <section class="input-summary" data-input-summary>
       <div>
-        <span>Въведени данни</span>
+        <span>${bg.result.enteredData}</span>
         <strong>${calculators[key].title}</strong>
         ${lines.map((line) => `<small>${line}</small>`).join("")}
       </div>
-      <button type="button" class="btn btn-outline-primary" data-action="edit-input">Промени</button>
+      <button type="button" class="btn btn-outline-primary" data-action="edit-input">${bg.actions.edit}</button>
     </section>
   `;
 }
@@ -438,8 +464,8 @@ function applyTheme(theme) {
   const toggle = document.querySelector("#themeToggle");
 
   if (toggle) {
-    toggle.textContent = theme === "dark" ? "Светла" : "Тъмна";
-    toggle.setAttribute("aria-label", theme === "dark" ? "Включи светла тема" : "Включи тъмна тема");
+    toggle.textContent = theme === "dark" ? bg.theme.lightButton : bg.theme.darkButton;
+    toggle.setAttribute("aria-label", theme === "dark" ? bg.theme.enableLight : bg.theme.enableDark);
   }
 }
 

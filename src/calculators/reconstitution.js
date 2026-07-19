@@ -1,16 +1,17 @@
 import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl, massConversionTrace, toMg, toMl, volumeConversionTrace } from "../units/units.js";
 import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { bg } from "../i18n/bg.js";
 
 export function calculateReconstitution(input) {
   const hasRequiredDose = String(input.requiredDose || "").trim() !== "";
   const fields = [
-    { label: "Количество във флакона", value: input.vialAmount },
-    { label: "Добавен разтворител", value: input.diluentVolume },
-    { label: "Краен разтворен обем", value: input.finalVolume },
+    { label: bg.fields.vialAmount, value: input.vialAmount },
+    { label: bg.fields.diluentAdded, value: input.diluentVolume },
+    { label: bg.fields.finalReconstitutedVolume, value: input.finalVolume },
   ];
 
   if (hasRequiredDose) {
-    fields.push({ label: "Назначена доза", value: input.requiredDose });
+    fields.push({ label: bg.fields.prescribedDose, value: input.requiredDose });
   }
 
   const errors = validatePositiveFields(fields);
@@ -24,11 +25,15 @@ export function calculateReconstitution(input) {
   const finalMl = toMl(input.finalVolume, input.finalVolumeUnit);
   const concentration = vialMg / finalMl;
   const instructions = [
-    `Добавете ${formatVolumeMl(diluentMl)} от посочения разтворител към флакона.`,
-    `Използвайте крайния разтворен обем от инструкцията: ${formatVolumeMl(finalMl)}.`,
-    `Получена концентрация: ${formatConcentrationMgPerMl(concentration)}.`,
+    bg.calculations.reconstitution.addDiluent(formatVolumeMl(diluentMl)),
+    bg.calculations.reconstitution.useFinalVolume(formatVolumeMl(finalMl)),
+    bg.calculations.reconstitution.resultingConcentration(formatConcentrationMgPerMl(concentration)),
   ];
-  const finalLines = [`Количество във флакона: ${formatMassMg(vialMg)}`, `Краен разтворен обем: ${formatVolumeMl(finalMl)}`, `Концентрация: ${formatConcentrationMgPerMl(concentration)}`];
+  const finalLines = [
+    bg.calculations.reconstitution.vialAmount(formatMassMg(vialMg)),
+    bg.calculations.reconstitution.finalVolume(formatVolumeMl(finalMl)),
+    bg.calculations.reconstitution.concentration(formatConcentrationMgPerMl(concentration)),
+  ];
   const traces = [`${formatMassMg(vialMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`];
   const notices = [
     massConversionTrace(input.vialAmount, input.vialAmountUnit, "mg"),
@@ -37,18 +42,18 @@ export function calculateReconstitution(input) {
   ].filter(Boolean);
   const warnings = highAlertWarning(input.highAlert);
   let primary = formatConcentrationMgPerMl(concentration);
-  let recipe = `Добавете ${formatVolumeMl(diluentMl)} разтворител. Краен разтворен обем: ${formatVolumeMl(finalMl)}.`;
+  let recipe = bg.calculations.reconstitution.baseRecipe(formatVolumeMl(diluentMl), formatVolumeMl(finalMl));
 
   if (hasRequiredDose) {
     const requiredMg = toMg(input.requiredDose, input.requiredDoseUnit);
     const withdrawMl = requiredMg / concentration;
     primary = formatVolumeMl(withdrawMl);
-    instructions.push(`За доза ${formatMassMg(requiredMg)} изтеглете ${formatVolumeMl(withdrawMl)}.`);
-    finalLines.push(`Доза за изтегляне: ${formatMassMg(requiredMg)}`);
+    instructions.push(bg.calculations.reconstitution.doseWithdraw(formatMassMg(requiredMg), formatVolumeMl(withdrawMl)));
+    finalLines.push(bg.calculations.reconstitution.doseLine(formatMassMg(requiredMg)));
     traces.push(`${formatMassMg(requiredMg)} ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatVolumeMl(withdrawMl)}`);
     notices.push(massConversionTrace(input.requiredDose, input.requiredDoseUnit, "mg"));
     warnings.push(...volumeWarnings(withdrawMl));
-    recipe += ` За доза ${formatMassMg(requiredMg)} изтеглете ${formatVolumeMl(withdrawMl)}.`;
+    recipe += ` ${bg.calculations.reconstitution.doseWithdraw(formatMassMg(requiredMg), formatVolumeMl(withdrawMl))}`;
   }
 
   return {

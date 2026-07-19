@@ -1,11 +1,12 @@
 import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl, massConversionTrace, parseDecimal, toMg, toMl, volumeConversionTrace } from "../units/units.js";
 import { highAlertWarning, validatePositiveFields } from "../safety/warnings.js";
+import { bg } from "../i18n/bg.js";
 
 export function calculateInfusionDoseRate(input) {
   const errors = validatePositiveFields([
-    { label: "Количество лекарство", value: input.medicationAmount },
-    { label: "Краен обем", value: input.finalVolume },
-    { label: "Назначена скорост", value: input.prescribedRate },
+    { label: bg.fields.medicationAmount, value: input.medicationAmount },
+    { label: bg.fields.finalVolume, value: input.finalVolume },
+    { label: bg.fields.prescribedRate, value: input.prescribedRate },
   ]);
 
   if (errors.length) {
@@ -26,8 +27,12 @@ export function calculateInfusionDoseRate(input) {
   return {
     ok: true,
     primary: `${formatNumber(pumpRate)} mL/h`,
-    instructions: [`Концентрация в инфузията: ${formatConcentrationMgPerMl(concentration)}.`, `Настройте помпата на ${formatNumber(pumpRate)} mL/h.`],
-    finalLines: [`Количество: ${formatMassMg(medicationMg)}`, `Краен обем: ${formatVolumeMl(finalMl)}`, `Скорост: ${formatNumber(rateMgPerHour)} mg/h`],
+    instructions: [bg.calculations.infusion.concentration(formatConcentrationMgPerMl(concentration)), bg.calculations.infusion.setPump(formatNumber(pumpRate))],
+    finalLines: [
+      bg.calculations.infusion.amount(formatMassMg(medicationMg)),
+      bg.calculations.infusion.finalVolume(formatVolumeMl(finalMl)),
+      bg.calculations.infusion.speed(formatNumber(rateMgPerHour)),
+    ],
     notices,
     traces: [`${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`, `${formatNumber(rateMgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatNumber(pumpRate)} mL/h`],
     warnings: highAlertWarning(input.highAlert),
@@ -35,15 +40,15 @@ export function calculateInfusionDoseRate(input) {
       totalAmount: formatMassMg(medicationMg),
       finalVolume: formatVolumeMl(finalMl),
       concentration: `${formatNumber(concentration)} mg/mL`,
-      recipe: `Пригответе ${formatMassMg(medicationMg)} в краен обем ${formatVolumeMl(finalMl)}. Настройте помпата на ${formatNumber(pumpRate)} mL/h.`,
+      recipe: bg.calculations.infusion.doseRateRecipe(formatMassMg(medicationMg), formatVolumeMl(finalMl), formatNumber(pumpRate)),
     },
   };
 }
 
 export function calculateInfusionVolumeTime(input) {
   const errors = validatePositiveFields([
-    { label: "Обем", value: input.volume },
-    { label: "Време", value: input.time },
+    { label: bg.fields.volume, value: input.volume },
+    { label: bg.fields.time, value: input.time },
   ]);
 
   if (errors.length) {
@@ -61,8 +66,8 @@ export function calculateInfusionVolumeTime(input) {
   return {
     ok: true,
     primary: `${formatNumber(rate)} mL/h`,
-    instructions: [`Настройте помпата на ${formatNumber(rate)} mL/h.`],
-    finalLines: [`Обем: ${formatVolumeMl(volumeMl)}`, `Време: ${formatNumber(hours)} h`],
+    instructions: [bg.calculations.infusion.setPump(formatNumber(rate))],
+    finalLines: [bg.calculations.infusion.volume(formatVolumeMl(volumeMl)), bg.calculations.infusion.time(formatNumber(hours))],
     notices,
     traces: [`${formatVolumeMl(volumeMl)} ÷ ${formatNumber(hours)} h = ${formatNumber(rate)} mL/h`],
     warnings: [],
@@ -70,7 +75,7 @@ export function calculateInfusionVolumeTime(input) {
       totalAmount: "",
       finalVolume: formatVolumeMl(volumeMl),
       concentration: "",
-      recipe: `Инфузирайте ${formatVolumeMl(volumeMl)} за ${formatNumber(hours)} h при ${formatNumber(rate)} mL/h.`,
+      recipe: bg.calculations.infusion.volumeTimeRecipe(formatVolumeMl(volumeMl), formatNumber(hours), formatNumber(rate)),
     },
   };
 }
