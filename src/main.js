@@ -214,7 +214,6 @@ function handleClick(event) {
     document.querySelector("[data-input-summary]")?.remove();
     const form = document.querySelector("[data-form]");
     form?.classList.remove("is-collapsed");
-    form?.setAttribute("aria-expanded", "true");
     return;
   }
 
@@ -303,13 +302,11 @@ function handleSubmit(event) {
     document.querySelector("[data-input-summary]")?.remove();
     form.insertAdjacentHTML("beforebegin", collapsedInputSummary(activeCalculator, values));
     form.classList.add("is-collapsed");
-    form.setAttribute("aria-expanded", "false");
     focusResult();
     return;
   }
 
   form.classList.remove("is-collapsed");
-  form.setAttribute("aria-expanded", "true");
   applyFieldErrors(form, result.fieldErrors || []);
   focusFirstError(form);
 }
@@ -396,7 +393,6 @@ function loadCalculation(calculator, values, options = {}) {
   if (result.ok && form) {
     form.insertAdjacentHTML("beforebegin", collapsedInputSummary(calculator, values));
     form.classList.add("is-collapsed");
-    form.setAttribute("aria-expanded", "false");
   }
   focusResult();
 }

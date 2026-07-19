@@ -57,6 +57,7 @@
 
 ```bash
 npm install
+npx playwright install chromium
 npm run dev
 ```
 
@@ -65,9 +66,15 @@ npm run dev
 ```bash
 npm test
 npm run build
+npm run test:e2e
+npm run test:all
 ```
 
-Тестовете покриват основните формули, преобразуване между единици, десетични входове, гранични стойности, предупреждения за малки обеми, невъзможни разреждания, reconstitution final volume поведение, infusion rate варианти, QR share decode и localStorage история/шаблони.
+Unit/regression тестовете покриват основните формули, преобразуване между единици, десетични входове, гранични стойности, предупреждения за малки обеми, невъзможни разреждания, reconstitution final volume поведение, infusion rate варианти, QR share decode, PWA assets и localStorage история/шаблони.
+
+E2E тестовете с Playwright проверяват основните потребителски сценарии в desktop и mobile Chromium: четирите калкулатора, текст на инструкции и проверка, field-level accessibility грешки, QR restore, history restore, templates restore и offline reload след първоначално зареждане.
+
+Подробно: [docs/testing.md](docs/testing.md).
 
 ## Деплой
 
