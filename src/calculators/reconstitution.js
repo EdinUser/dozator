@@ -2,13 +2,14 @@ import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl,
 import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
 
 export function calculateReconstitution(input) {
+  const hasRequiredDose = String(input.requiredDose || "").trim() !== "";
   const fields = [
     { label: "Количество във флакона", value: input.vialAmount },
     { label: "Добавен разтворител", value: input.diluentVolume },
     { label: "Краен разтворен обем", value: input.finalVolume },
   ];
 
-  if (input.requiredDose) {
+  if (hasRequiredDose) {
     fields.push({ label: "Назначена доза", value: input.requiredDose });
   }
 
@@ -38,7 +39,7 @@ export function calculateReconstitution(input) {
   let primary = formatConcentrationMgPerMl(concentration);
   let recipe = `Добавете ${formatVolumeMl(diluentMl)} разтворител. Краен разтворен обем: ${formatVolumeMl(finalMl)}.`;
 
-  if (input.requiredDose) {
+  if (hasRequiredDose) {
     const requiredMg = toMg(input.requiredDose, input.requiredDoseUnit);
     const withdrawMl = requiredMg / concentration;
     primary = formatVolumeMl(withdrawMl);
