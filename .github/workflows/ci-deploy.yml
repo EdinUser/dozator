@@ -73,6 +73,12 @@ jobs:
           echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
           chmod 600 ~/.ssh/vps_key
 
+      - name: Verify deploy connection and target
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" \
+            "set -euo pipefail; test -d '${WEB_ROOT}'; test -w '${WEB_ROOT}'; tmp='${WEB_ROOT}/.dozator-deploy-test'; printf 'ok' > \"\$tmp\"; test \"\$(cat \"\$tmp\")\" = 'ok'; rm -f \"\$tmp\""
+
       - name: Sync static files to VPS
         run: |
           set -euo pipefail
