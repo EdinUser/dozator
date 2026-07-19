@@ -68,11 +68,11 @@ jobs:
 
     env:
       VPS_HOST: ${{ secrets.VPS_HOST }}
-      VPS_USER: [redacted-deploy-user]
+      VPS_USER: ${{ secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-      VPS_PORT: [redacted-ssh-port]
-      WEB_ROOT: [redacted-web-root]
-      WEB_OWNER: [redacted-web-owner]
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      WEB_ROOT: ${{ secrets.VPS_WEB_ROOT }}
+      WEB_OWNER: ${{ secrets.VPS_WEB_OWNER }}
 
     steps:
       - name: Download build artifact
@@ -101,14 +101,8 @@ jobs:
             -e "ssh -i ~/.ssh/vps_key -p ${VPS_PORT} -o StrictHostKeyChecking=no" \
             dist/ "${VPS_USER}@${VPS_HOST}:${WEB_ROOT}/"
 
-      - name: Fix ISPConfig permissions
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: [redacted-deploy-user]
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: [redacted-ssh-port]
-          script: |
-            chown -R [redacted-web-owner] [redacted-web-root]
-            find [redacted-web-root] -type d -exec chmod 755 {} \;
-            find [redacted-web-root] -type f -exec chmod 644 {} \;
+      - name: Fix production permissions
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" \
+            "set -euo pipefail; chown -R '${WEB_OWNER}' '${WEB_ROOT}'; find '${WEB_ROOT}' -type d -exec chmod 755 {} \;; find '${WEB_ROOT}' -type f -exec chmod 644 {} \;"

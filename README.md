@@ -15,7 +15,7 @@
 
 Интерфейсът е на български. Мерните единици се изписват със стандартни Latin/SI означения: `g`, `mg`, `µg`, `L`, `mL`, `min`, `h`, `mg/mL`, `µg/mL`, `units/mL`.
 
-## MVP функции
+## Функции
 
 - Доза от готов разтвор
 - Разреждане до концентрация
@@ -37,21 +37,12 @@
 - Installable PWA с offline работа след първоначално зареждане
 - Видима версия на приложението и `CHANGELOG.md`
 
-## Архитектурни правила
+## Важни ограничения
 
-- Калкулациите стоят отделно от UI кода.
-- Форматирането на числа и единици минава през общ unit слой.
-- UI текстът е на български, освен мерните единици.
-- Ако се добави templating framework, template файловете трябва да са извън Vite JS модулите.
-- Да не се добавя неофициална лекарствена база или AI-генерирани инструкции.
-- Потребителските настройки от MVP се пазят само в `localStorage`.
-- Валидно преобразуване на единици се показва като информация, а не като грешка.
-- Числата се парсват през общ decimal parser; не се използва директно `Number()` върху стойности от формите.
-- Споделените изчисления се кодират в URL hash и се преизчисляват локално в браузъра; не се записват на сървър.
-- Историята и шаблоните се пазят само в `localStorage`.
-- Медицинските формули, ограничения и статусът на външен преглед се описват в `docs/clinical-validation.md`.
-- PWA файловете са статични и се намират в `public/`: `manifest.webmanifest`, `service-worker.js` и app icons.
-- При промяна на версията синхронизирайте `package.json`, `src/app-version.js`, `public/service-worker.js` и `CHANGELOG.md`.
+- Калкулаторът не е drug reference и не е prescribing assistant.
+- Няма backend и няма сървърно съхранение на потребителски данни.
+- QR/share payload не трябва да съдържа patient identifiers или свободни медицински бележки.
+- Production deployment стойности не се документират публично в repo.
 
 ## Локална разработка
 
@@ -70,38 +61,25 @@ npm run test:e2e
 npm run test:all
 ```
 
-Unit/regression тестовете покриват основните формули, преобразуване между единици, десетични входове, гранични стойности, предупреждения за малки обеми, невъзможни разреждания, reconstitution final volume поведение, infusion rate варианти, QR share decode, PWA assets и localStorage история/шаблони.
-
-E2E тестовете с Playwright проверяват основните потребителски сценарии в desktop и mobile Chromium: четирите калкулатора, текст на инструкции и проверка, field-level accessibility грешки, QR restore, history restore, templates restore и offline reload след първоначално зареждане.
-
 Подробно: [docs/testing.md](docs/testing.md).
 
-## Деплой
+## CI/CD
 
 Приложението се build-ва до статична директория `dist/`.
 
-GitHub Actions:
+- pull request към `main`: инсталира dependencies, пуска unit/regression тестове, build и E2E тестове;
+- push към `main`: пуска същите проверки и след това production deploy през GitHub Actions.
 
-- pull request към `main`: `npm ci`, `npm test`, `npm run build`;
-- push към `main`: същите проверки, след това deploy към VPS.
+Конкретните production target стойности се пазят в GitHub repository secrets и не се документират публично в README.
 
-Production target:
+Подробно: [docs/deployment.md](docs/deployment.md).
 
-```text
-[redacted-web-root]
-```
+## Технически документи
 
-Deployment използва SSH към VPS на порт `[redacted-ssh-port]` и синхронизира `dist/` с `rsync`. След deploy се задават ISPConfig permissions:
-
-```text
-owner: [redacted-web-owner]
-directories: 755
-files: 644
-```
-
-Нужни GitHub repository secrets:
-
-```text
-VPS_HOST
-VPS_SSH_KEY
-```
+- [docs/project-context.md](docs/project-context.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/development.md](docs/development.md)
+- [docs/testing.md](docs/testing.md)
+- [docs/privacy-security.md](docs/privacy-security.md)
+- [docs/clinical-validation.md](docs/clinical-validation.md)
+- [docs/deployment.md](docs/deployment.md)
