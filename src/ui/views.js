@@ -72,19 +72,19 @@ export function renderClinicalValidationScreen() {
 export function renderResultPanel(result) {
   if (!result.ok) {
     return `
-      <div class="alert alert-danger" role="alert">
+      <div class="alert alert-danger result-alert" role="alert" aria-label="${bg.result.errorRegionLabel}" tabindex="-1" data-result-panel>
         ${result.errors.map((error) => `<div>${error}</div>`).join("")}
       </div>
     `;
   }
 
   return `
-    <section class="result-panel" aria-live="polite">
+    <section class="result-panel" aria-live="polite" aria-atomic="false" aria-label="${bg.result.successRegionLabel}" tabindex="-1" data-result-panel>
       <div class="result-primary">
         <span>${bg.result.title}</span>
         <strong>${result.primary}</strong>
       </div>
-      ${result.warnings.length ? `<div class="alert alert-warning">${result.warnings.map((warning) => `<div>${warning}</div>`).join("")}</div>` : ""}
+      ${result.warnings.length ? `<div class="alert alert-warning" role="alert">${result.warnings.map((warning) => `<div>${warning}</div>`).join("")}</div>` : ""}
       ${result.notices?.length ? renderNoticeBlock(result.notices) : ""}
       <div class="result-block">
         <h2>${bg.result.preparation}</h2>
@@ -106,7 +106,7 @@ export function renderResultPanel(result) {
 
 export function renderRestoreWarning() {
   return `
-    <div class="alert alert-warning restore-warning" role="alert">
+    <div class="alert alert-warning restore-warning" role="alert" tabindex="-1">
       ${bg.safety.restoredCalculation}
     </div>
   `;
@@ -384,7 +384,7 @@ const formTemplates = {
 
 function renderDoseForm() {
   return `
-    <form class="calculator-form" data-form>
+    <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.dose.prescribedDose}</legend>
         ${numberWithUnit("requiredDose", bg.forms.dose.dose, "125", ["g", "mg", "µg"], "mg")}
@@ -402,7 +402,7 @@ function renderDoseForm() {
 
 function renderDilutionForm() {
   return `
-    <form class="calculator-form" data-form>
+    <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.dilution.availableConcentration}</legend>
         ${concentrationFields("available", "10", "1")}
@@ -424,7 +424,7 @@ function renderDilutionForm() {
 
 function renderReconstitutionForm() {
   return `
-    <form class="calculator-form" data-form>
+    <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.reconstitution.vial}</legend>
         ${numberWithUnit("vialAmount", bg.forms.reconstitution.vialAmount, "1", ["g", "mg", "µg"], "g")}
@@ -447,7 +447,7 @@ function renderReconstitutionForm() {
 
 function renderInfusionForm() {
   return `
-    <form class="calculator-form" data-form>
+    <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.infusion.mode}</legend>
         <div class="infusion-mode-options" role="radiogroup" aria-label="${bg.forms.infusion.modeAriaLabel}">
@@ -510,6 +510,7 @@ function numberWithUnit(name, label, value, units, selectedUnit, required = true
           ${units.map((unit) => `<option value="${unit}" ${unit === selectedUnit ? "selected" : ""}>${unit}</option>`).join("")}
         </select>
       </div>
+      <div class="invalid-feedback field-error" id="${name}Error"></div>
     </div>
   `;
 }

@@ -1,23 +1,23 @@
 import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl, massConversionTrace, toMg, toMl, volumeConversionTrace } from "../units/units.js";
-import { highAlertWarning, validatePositiveFields, volumeWarnings } from "../safety/warnings.js";
+import { highAlertWarning, validatePositiveFieldEntries, volumeWarnings } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
 
 export function calculateReconstitution(input) {
   const hasRequiredDose = String(input.requiredDose || "").trim() !== "";
   const fields = [
-    { label: bg.fields.vialAmount, value: input.vialAmount },
-    { label: bg.fields.diluentAdded, value: input.diluentVolume },
-    { label: bg.fields.finalReconstitutedVolume, value: input.finalVolume },
+    { name: "vialAmount", label: bg.fields.vialAmount, value: input.vialAmount },
+    { name: "diluentVolume", label: bg.fields.diluentAdded, value: input.diluentVolume },
+    { name: "finalVolume", label: bg.fields.finalReconstitutedVolume, value: input.finalVolume },
   ];
 
   if (hasRequiredDose) {
-    fields.push({ label: bg.fields.prescribedDose, value: input.requiredDose });
+    fields.push({ name: "requiredDose", label: bg.fields.prescribedDose, value: input.requiredDose });
   }
 
-  const errors = validatePositiveFields(fields);
+  const fieldErrors = validatePositiveFieldEntries(fields);
 
-  if (errors.length) {
-    return { ok: false, errors };
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
   const vialMg = toMg(input.vialAmount, input.vialAmountUnit);
