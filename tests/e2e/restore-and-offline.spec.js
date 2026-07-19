@@ -70,6 +70,23 @@ test("QR URL restore sanitizes free-text fields and recalculates locally", async
   await expect(page.locator("#requiredDose")).toHaveValue("350");
 });
 
+test("screen hash URLs load and survive reload", async ({ page }) => {
+  for (const route of [
+    { hash: "dose", heading: "Доза от готов разтвор" },
+    { hash: "dilution", heading: "Разреждане до концентрация" },
+    { hash: "reconstitution", heading: "Разтваряне на флакон" },
+    { hash: "infusion", heading: "Инфузионна скорост" },
+    { hash: "validation", heading: "Как са проверени изчисленията" },
+  ]) {
+    await page.goto(`/#${route.hash}`);
+    await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`#${route.hash}$`));
+  }
+});
+
 test("installed app shell reloads while offline after first load", async ({ page, context }) => {
   await page.goto("/");
   await page.evaluate(async () => {

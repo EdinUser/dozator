@@ -55,6 +55,12 @@
 - Restore винаги преизчислява през calculator функцията. Не се доверява на записан стар резултат.
 - Restore от QR/history/templates показва предупреждение за повторна проверка спрямо текущото назначение и опаковка.
 
+## Hash Navigation
+
+- Екраните имат директни hash маршрути: `#dose`, `#dilution`, `#reconstitution`, `#infusion` и `#validation`.
+- Reload на тези URL-и трябва да оставя потребителя на същия екран.
+- `#calc=` е запазен само за QR/share restore payload и не трябва да се използва за обикновена навигация.
+
 ## QR Sharing
 
 QR кодът е URL с hash payload. Няма server round-trip. `src/share/share-link.js` има allowlist по тип калкулатор и отхвърля свободни/непознати полета при decode.
