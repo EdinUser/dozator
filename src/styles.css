@@ -111,6 +111,14 @@ body {
   padding: 0.75rem;
 }
 
+.app-version {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 0.4rem;
+  opacity: 0.92;
+}
+
 .app-main {
   padding-block: 1.5rem 3rem;
 }

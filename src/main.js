@@ -29,6 +29,8 @@ import { buildShareUrl, readSharedCalculation } from "./share/share-link.js";
 import { clearHistory, deleteFavorite, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "./storage/calculation-store.js";
 import { calculationSummary } from "./storage/summaries.js";
 import { bg } from "./i18n/bg.js";
+import { appVersion } from "./app-version.js";
+import { registerServiceWorker } from "./pwa/register-service-worker.js";
 
 const acknowledgementKey = "dozator-safety-acknowledged";
 const themeKey = "dozator-theme";
@@ -70,6 +72,7 @@ const calculators = {
   },
 };
 
+registerServiceWorker();
 renderApp();
 
 function renderApp() {
@@ -92,6 +95,7 @@ function renderApp() {
         </div>
         <div class="safety-strip mt-3" role="note">
           ${bg.app.safetyStrip}
+          <span class="app-version">${bg.app.version(appVersion)}. ${bg.app.offlineReady}</span>
         </div>
       </div>
     </header>
