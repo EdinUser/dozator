@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   concentrationConversionTrace,
   concentrationToMgPerMl,
+  directConcentrationConversionTrace,
+  directConcentrationToMgPerMl,
   formatConcentrationMgPerMl,
   formatMassMg,
   formatNumber,
@@ -48,6 +50,8 @@ describe("unit conversion", () => {
   it("converts concentration to mg/mL", () => {
     expect(concentrationToMgPerMl("1", "g", "0.5", "L")).toBe(2);
     expect(concentrationToMgPerMl("250", "µg", "5", "mL")).toBe(0.05);
+    expect(directConcentrationToMgPerMl("500", "µg/mL")).toBe(0.5);
+    expect(directConcentrationToMgPerMl("1", "%")).toBe(10);
   });
 
   it("creates explicit conversion traces", () => {
@@ -55,6 +59,8 @@ describe("unit conversion", () => {
     expect(massConversionTrace("250", "µg", "mg")).toBe("250 µg = 0.25 mg");
     expect(volumeConversionTrace("0,25", "L", "mL")).toBe("0.25 L = 250 mL");
     expect(concentrationConversionTrace("1", "g", "0.5", "L")).toEqual(["1 g = 1000 mg", "0.5 L = 500 mL"]);
+    expect(directConcentrationConversionTrace("500", "µg/mL")).toBe("500 µg/mL = 0.5 mg/mL");
+    expect(directConcentrationConversionTrace("1", "%")).toBe("1 % = 10 mg/mL");
   });
 });
 

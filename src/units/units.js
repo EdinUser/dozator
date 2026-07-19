@@ -75,6 +75,34 @@ export function concentrationToMgPerMl(amount, amountUnit, volume, volumeUnit) {
   return toMg(amount, amountUnit) / toMl(volume, volumeUnit);
 }
 
+export function directConcentrationToMgPerMl(value, unit) {
+  const concentration = parseDecimal(value);
+
+  if (unit === "mg/mL") {
+    return concentration;
+  }
+
+  if (unit === "µg/mL") {
+    return concentration * 0.001;
+  }
+
+  if (unit === "%") {
+    return concentration * 10;
+  }
+
+  return Number.NaN;
+}
+
+export function directConcentrationConversionTrace(value, unit) {
+  const concentration = directConcentrationToMgPerMl(value, unit);
+
+  if (unit === "mg/mL" || !Number.isFinite(concentration)) {
+    return null;
+  }
+
+  return `${formatNumber(value)} ${unit} = ${formatNumber(concentration)} mg/mL`;
+}
+
 export function formatNumber(value) {
   const number = parseDecimal(value);
 

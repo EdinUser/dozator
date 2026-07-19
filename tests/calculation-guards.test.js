@@ -71,16 +71,13 @@ describe("dose calculation guards", () => {
 });
 
 describe("dilution calculation guards", () => {
-  it("handles mixed mass and volume units", () => {
+  it("handles direct concentration unit conversions", () => {
     const result = calculateDilution({
-      availableAmount: "1",
-      availableAmountUnit: "g",
-      availableVolume: "0.1",
-      availableVolumeUnit: "L",
-      targetAmount: "500",
-      targetAmountUnit: "µg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "1",
+      availableConcentrationUnit: "%",
+      targetConcentration: "500",
+      targetConcentrationUnit: "µg/mL",
       finalVolume: "0.02",
       finalVolumeUnit: "L",
       highAlert: false,
@@ -89,21 +86,18 @@ describe("dilution calculation guards", () => {
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("1 mL");
     expect(result.instructions).toContain("Добавете 19 mL от посочения разтворител.");
-    expect(result.notices).toEqual(["1 g = 1000 mg", "0.1 L = 100 mL", "500 µg = 0.5 mg"]);
-    expect(result.traces).toContain("10 mg/mL × 1 mL = 10 mg");
-    expect(result.traces).toContain("10 mg ÷ 20 mL = 500 µg/mL");
+    expect(result.notices).toEqual(["1 % = 10 mg/mL", "500 µg/mL = 0.5 mg/mL", "0.02 L = 20 mL"]);
+    expect(result.traces).toContain("500 µg/mL × 20 mL = 10 mg");
+    expect(result.traces).toContain("10 mg ÷ 10 mg/mL = 1 mL");
   });
 
   it("allows no-diluent case when target equals available concentration", () => {
     const result = calculateDilution({
-      availableAmount: "2",
-      availableAmountUnit: "mg",
-      availableVolume: "1",
-      availableVolumeUnit: "mL",
-      targetAmount: "2",
-      targetAmountUnit: "mg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "2",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "mg/mL",
       finalVolume: "10",
       finalVolumeUnit: "mL",
       highAlert: false,
@@ -114,22 +108,37 @@ describe("dilution calculation guards", () => {
     expect(result.instructions).toContain("Добавете 0 mL от посочения разтворител.");
   });
 
+  it("calculates final volume from a stock volume", () => {
+    const result = calculateDilution({
+      mode: "diluteAvailableAmount",
+      availableConcentration: "10",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "mg/mL",
+      stockVolume: "0.004",
+      stockVolumeUnit: "L",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("20 mL");
+    expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
+    expect(result.notices).toEqual(["0.004 L = 4 mL"]);
+    expect(result.traces).toContain("10 mg/mL × 4 mL = 40 mg");
+    expect(result.traces).toContain("40 mg ÷ 2 mg/mL = 20 mL");
+  });
+
   it.each([
-    ["availableAmount", "0"],
-    ["availableVolume", "0"],
-    ["targetAmount", "0"],
-    ["targetVolume", "0"],
+    ["availableConcentration", "0"],
+    ["targetConcentration", "0"],
     ["finalVolume", "0"],
   ])("rejects invalid %s", (field, value) => {
     const input = {
-      availableAmount: "1",
-      availableAmountUnit: "mg",
-      availableVolume: "1",
-      availableVolumeUnit: "mL",
-      targetAmount: "1",
-      targetAmountUnit: "mg",
-      targetVolume: "1",
-      targetVolumeUnit: "mL",
+      mode: "prepareFinalVolume",
+      availableConcentration: "1",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "1",
+      targetConcentrationUnit: "mg/mL",
       finalVolume: "1",
       finalVolumeUnit: "mL",
       highAlert: false,
@@ -138,6 +147,22 @@ describe("dilution calculation guards", () => {
     const result = calculateDilution({ ...input, [field]: value });
     expect(result.ok).toBe(false);
     expect(result.fieldErrors[0]).toMatchObject({ name: field });
+  });
+
+  it("rejects invalid stock volume in dilute available amount mode", () => {
+    const result = calculateDilution({
+      mode: "diluteAvailableAmount",
+      availableConcentration: "1",
+      availableConcentrationUnit: "mg/mL",
+      targetConcentration: "1",
+      targetConcentrationUnit: "mg/mL",
+      stockVolume: "0",
+      stockVolumeUnit: "mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors[0]).toMatchObject({ name: "stockVolume" });
   });
 });
 
@@ -222,8 +247,12 @@ describe("infusion calculation guards", () => {
       medicationAmountUnit: "g",
       finalVolume: "0.5",
       finalVolumeUnit: "L",
+      patientWeight: "",
+      patientWeightUnit: "kg",
       prescribedRate: "50000",
       prescribedRateUnit: "µg/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
       highAlert: false,
     });
 
@@ -257,12 +286,66 @@ describe("infusion calculation guards", () => {
       medicationAmountUnit: "mg",
       finalVolume: "1",
       finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
       prescribedRate: "1",
       prescribedRateUnit: "mg/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
       highAlert: false,
     };
 
     expect(calculateInfusionDoseRate({ ...input, [field]: value }).ok).toBe(false);
+  });
+
+  it("requires patient weight for weight-based dose-rate units", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "250",
+      medicationAmountUnit: "mg",
+      finalVolume: "50",
+      finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
+      prescribedRate: "5",
+      prescribedRateUnit: "µg/kg/min",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors).toEqual([
+      {
+        name: "patientWeight",
+        label: "Тегло на пациента",
+        message: "Тегло на пациента трябва да бъде положително число.",
+      },
+    ]);
+  });
+
+  it("rejects invalid optional hours to run when provided", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "500",
+      medicationAmountUnit: "mg",
+      finalVolume: "250",
+      finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
+      prescribedRate: "25",
+      prescribedRateUnit: "mg/h",
+      hoursToRun: "0",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors).toEqual([
+      {
+        name: "hoursToRun",
+        label: "Часове за вливане",
+        message: "Часове за вливане трябва да бъде положително число.",
+      },
+    ]);
   });
 
   it.each([

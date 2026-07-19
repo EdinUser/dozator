@@ -35,9 +35,33 @@ describe("share links", () => {
       v: 1,
       calculator: "dilution",
       values: {
+        availableConcentration: "10",
+        availableConcentrationUnit: "mg/mL",
+        diluent: "free text",
+        patientName: "not allowed",
+      },
+    };
+    const hash = `#calc=${btoa(encodeURIComponent(JSON.stringify(payload)))}`;
+
+    expect(readSharedCalculation(hash)).toEqual({
+      v: 1,
+      calculator: "dilution",
+      values: {
+        availableConcentration: "10",
+        availableConcentrationUnit: "mg/mL",
+      },
+    });
+  });
+
+  it("keeps legacy structured dilution fields for old shared links", () => {
+    const payload = {
+      v: 1,
+      calculator: "dilution",
+      values: {
         availableAmount: "10",
         availableAmountUnit: "mg",
-        diluent: "free text",
+        targetAmount: "2",
+        targetAmountUnit: "mg",
         patientName: "not allowed",
       },
     };
@@ -49,6 +73,8 @@ describe("share links", () => {
       values: {
         availableAmount: "10",
         availableAmountUnit: "mg",
+        targetAmount: "2",
+        targetAmountUnit: "mg",
       },
     });
   });

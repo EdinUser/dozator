@@ -82,6 +82,6 @@ E2E тестът `installed app shell reloads while offline after first load` п
 - Няма медицинска база данни.
 - Няма автоматичен избор на разтворител.
 - Няма стабилност/expiry изчисления.
-- Няма patient-specific dose logic.
+- Няма patient-specific dose recommendation logic; теглото се използва само като числов множител при инфузионни назначения по kg.
 - Няма server audit trail.
 - Терминологията и формулите чакат външна проверка от медицински персонал.

@@ -3,11 +3,22 @@ import { highAlertWarning, validatePositiveFieldEntries } from "../safety/warnin
 import { bg } from "../i18n/bg.js";
 
 export function calculateInfusionDoseRate(input) {
-  const fieldErrors = validatePositiveFieldEntries([
+  const fields = [
     { name: "medicationAmount", label: bg.fields.medicationAmount, value: input.medicationAmount },
     { name: "finalVolume", label: bg.fields.finalVolume, value: input.finalVolume },
     { name: "prescribedRate", label: bg.fields.prescribedRate, value: input.prescribedRate },
-  ]);
+  ];
+  const hasHoursToRun = String(input.hoursToRun || "").trim() !== "";
+
+  if (isWeightBasedRate(input.prescribedRateUnit)) {
+    fields.push({ name: "patientWeight", label: bg.fields.patientWeight, value: input.patientWeight });
+  }
+
+  if (hasHoursToRun) {
+    fields.push({ name: "hoursToRun", label: bg.fields.hoursToRun, value: input.hoursToRun });
+  }
+
+  const fieldErrors = validatePositiveFieldEntries(fields);
 
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
@@ -15,26 +26,38 @@ export function calculateInfusionDoseRate(input) {
 
   const medicationMg = toMg(input.medicationAmount, input.medicationAmountUnit);
   const finalMl = toMl(input.finalVolume, input.finalVolumeUnit);
-  const rateMgPerHour = input.prescribedRateUnit === "mg/h" ? parseDecimal(input.prescribedRate) : toMg(input.prescribedRate, "µg");
+  const rate = rateToMgPerHour(input);
   const concentration = medicationMg / finalMl;
-  const pumpRate = rateMgPerHour / concentration;
+  const pumpRate = rate.mgPerHour / concentration;
+  const volumeRate = hasHoursToRun ? volumeRateFromHours(finalMl, input.hoursToRun) : null;
   const notices = [
     massConversionTrace(input.medicationAmount, input.medicationAmountUnit, "mg"),
     volumeConversionTrace(input.finalVolume, input.finalVolumeUnit, "mL"),
-    input.prescribedRateUnit === "µg/h" ? `${formatNumber(input.prescribedRate)} µg/h = ${formatNumber(rateMgPerHour)} mg/h` : null,
+    rate.notice,
   ].filter(Boolean);
 
   return {
     ok: true,
     primary: `${formatNumber(pumpRate)} mL/h`,
-    instructions: [bg.calculations.infusion.concentration(formatConcentrationMgPerMl(concentration)), bg.calculations.infusion.setPump(formatNumber(pumpRate))],
+    instructions: [
+      bg.calculations.infusion.concentration(formatConcentrationMgPerMl(concentration)),
+      bg.calculations.infusion.setPump(formatNumber(pumpRate)),
+      ...(volumeRate ? [bg.calculations.infusion.volumeRate(formatNumber(volumeRate.rate), formatNumber(volumeRate.hours))] : []),
+    ],
     finalLines: [
       bg.calculations.infusion.amount(formatMassMg(medicationMg)),
       bg.calculations.infusion.finalVolume(formatVolumeMl(finalMl)),
-      bg.calculations.infusion.speed(formatNumber(rateMgPerHour)),
+      ...(rate.weightKg ? [bg.calculations.infusion.weight(formatNumber(rate.weightKg))] : []),
+      bg.calculations.infusion.speed(formatNumber(rate.mgPerHour)),
+      ...(volumeRate ? [bg.calculations.infusion.hoursToRun(formatNumber(volumeRate.hours))] : []),
     ],
     notices,
-    traces: [`${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`, `${formatNumber(rateMgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatNumber(pumpRate)} mL/h`],
+    traces: [
+      `${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`,
+      ...(rate.trace ? [rate.trace] : []),
+      `${formatNumber(rate.mgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatNumber(pumpRate)} mL/h`,
+      ...(volumeRate ? [`${formatVolumeMl(finalMl)} ÷ ${formatNumber(volumeRate.hours)} h = ${formatNumber(volumeRate.rate)} mL/h`] : []),
+    ],
     warnings: highAlertWarning(input.highAlert),
     label: {
       totalAmount: formatMassMg(medicationMg),
@@ -42,6 +65,50 @@ export function calculateInfusionDoseRate(input) {
       concentration: `${formatNumber(concentration)} mg/mL`,
       recipe: bg.calculations.infusion.doseRateRecipe(formatMassMg(medicationMg), formatVolumeMl(finalMl), formatNumber(pumpRate)),
     },
+  };
+}
+
+function volumeRateFromHours(finalMl, hoursToRun) {
+  const hours = parseDecimal(hoursToRun);
+  return {
+    hours,
+    rate: finalMl / hours,
+  };
+}
+
+function isWeightBasedRate(unit) {
+  return unit?.includes("/kg/");
+}
+
+function rateToMgPerHour(input) {
+  const prescribedRate = parseDecimal(input.prescribedRate);
+  const unit = input.prescribedRateUnit;
+
+  if (unit === "mg/h") {
+    return { mgPerHour: prescribedRate };
+  }
+
+  if (unit === "µg/h") {
+    const mgPerHour = toMg(prescribedRate, "µg");
+    return {
+      mgPerHour,
+      notice: `${formatNumber(input.prescribedRate)} µg/h = ${formatNumber(mgPerHour)} mg/h`,
+    };
+  }
+
+  const weightKg = parseDecimal(input.patientWeight);
+  const isMicrogram = unit.startsWith("µg/");
+  const isPerMinute = unit.endsWith("/min");
+  const dosePerHour = prescribedRate * weightKg * (isPerMinute ? 60 : 1);
+  const mgPerHour = isMicrogram ? toMg(dosePerHour, "µg") : dosePerHour;
+  const timeMultiplier = isPerMinute ? " × 60 min/h" : "";
+  const trace = `${formatNumber(input.prescribedRate)} ${unit} × ${formatNumber(weightKg)} kg${timeMultiplier} = ${formatNumber(mgPerHour)} mg/h`;
+
+  return {
+    mgPerHour,
+    weightKg,
+    trace,
+    notice: isMicrogram ? trace : null,
   };
 }
 
