@@ -34,6 +34,7 @@ import { registerServiceWorker } from "./pwa/register-service-worker.js";
 
 const acknowledgementKey = "dozator-safety-acknowledged";
 const themeKey = "dozator-theme";
+const validationRoute = "validation";
 const app = document.querySelector("#app");
 let activeCalculator = null;
 let lastResult = null;
@@ -149,7 +150,7 @@ function renderApp() {
   favoriteNameModal = new bootstrap.Modal(document.querySelector("#favoriteNameModal"));
   applyTheme(getTheme());
   wireEvents();
-  if (!loadSharedCalculation()) {
+  if (!renderRouteFromHash()) {
     renderHome();
   }
   showFirstUseNotice();
@@ -160,6 +161,9 @@ function wireEvents() {
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
   app.addEventListener("input", handleInput);
+  app.addEventListener("focusin", handleFocusIn);
+  window.addEventListener("hashchange", handleHashChange);
+  window.addEventListener("popstate", handlePopState);
 }
 
 function handleClick(event) {
@@ -167,20 +171,14 @@ function handleClick(event) {
   const calculator = event.target.closest("[data-calculator]")?.dataset.calculator;
 
   if (calculator) {
-    activeCalculator = calculator;
-    lastResult = null;
-    lastSubmittedValues = null;
     hideOpenMenu();
-    renderCalculator(calculator);
+    navigateToRoute(calculator);
     return;
   }
 
   if (action === "home" || action === "start-over") {
-    activeCalculator = null;
-    lastResult = null;
-    lastSubmittedValues = null;
     hideOpenMenu();
-    renderHome();
+    navigateHome();
     return;
   }
 
@@ -257,11 +255,8 @@ function handleClick(event) {
   }
 
   if (action === "show-clinical-validation") {
-    activeCalculator = null;
-    lastResult = null;
-    lastSubmittedValues = null;
     hideOpenMenu();
-    renderClinicalValidation();
+    navigateToRoute(validationRoute);
     return;
   }
 
@@ -335,16 +330,129 @@ function handleInput(event) {
   }
 }
 
+function handleFocusIn(event) {
+  if (event.target.matches("[data-form] input.form-control")) {
+    event.target.select();
+  }
+}
+
+function handleHashChange() {
+  const route = currentHashRoute();
+
+  if (!route || route.type === "skip") {
+    return;
+  }
+
+  renderRoute(route);
+}
+
+function handlePopState() {
+  if (!renderRouteFromHash()) {
+    renderHome();
+  }
+}
+
 function renderHome() {
+  activeCalculator = null;
+  lastResult = null;
+  lastSubmittedValues = null;
   document.querySelector("#screen").innerHTML = renderHomeScreen();
 }
 
 function renderCalculator(key) {
+  activeCalculator = key;
+  lastResult = null;
+  lastSubmittedValues = null;
   document.querySelector("#screen").innerHTML = renderCalculatorScreen(calculators[key]);
 }
 
 function renderClinicalValidation() {
+  activeCalculator = null;
+  lastResult = null;
+  lastSubmittedValues = null;
   document.querySelector("#screen").innerHTML = renderClinicalValidationScreen();
+}
+
+function navigateToRoute(routeKey) {
+  const targetHash = `#${routeKey}`;
+
+  if (window.location.hash === targetHash) {
+    renderRoute(currentHashRoute());
+    return;
+  }
+
+  window.location.hash = routeKey;
+}
+
+function navigateHome() {
+  const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+  if (!window.location.hash) {
+    renderHome();
+    return;
+  }
+
+  window.history.pushState(null, "", currentUrl);
+  renderHome();
+}
+
+function renderRouteFromHash() {
+  const route = currentHashRoute();
+
+  if (!route || route.type === "skip") {
+    return false;
+  }
+
+  return renderRoute(route);
+}
+
+function renderRoute(route) {
+  if (route.type === "home") {
+    renderHome();
+    return true;
+  }
+
+  if (route.type === "share") {
+    return loadSharedCalculation();
+  }
+
+  if (route.type === "calculator") {
+    renderCalculator(route.key);
+    return true;
+  }
+
+  if (route.type === "validation") {
+    renderClinicalValidation();
+    return true;
+  }
+
+  return false;
+}
+
+function currentHashRoute() {
+  const hash = window.location.hash.replace(/^#/, "").replace(/^\//, "");
+
+  if (!hash) {
+    return { type: "home" };
+  }
+
+  if (hash === "screen") {
+    return { type: "skip" };
+  }
+
+  if (hash.startsWith("calc=")) {
+    return { type: "share" };
+  }
+
+  if (hash === validationRoute) {
+    return { type: "validation" };
+  }
+
+  if (calculators[hash]) {
+    return { type: "calculator", key: hash };
+  }
+
+  return null;
 }
 
 function openStoredEntry(id) {

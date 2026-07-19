@@ -1,4 +1,4 @@
-const appVersion = "0.1.1";
+const appVersion = "0.2.0";
 const cacheName = `dozator-${appVersion}`;
 const appShell = [
   "/",

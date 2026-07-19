@@ -108,6 +108,14 @@ test("infusion calculator handles dose-rate and volume-time modes separately", a
   await expect(page.getByText("21 mg/h ÷ 2 mg/mL = 10.5 mL/h")).toBeVisible();
 
   await page.getByRole("button", { name: "Промени" }).click();
+  await page.locator("select[name='prescribedRateUnit']").selectOption("µg/kg/h");
+  await page.locator("#prescribedRate").fill("5");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("5 µg/kg/h × 70 kg = 0.35 mg/h")).toHaveCount(2);
+  await expect(page.getByText("0.35 mg/h ÷ 2 mg/mL = 0.175 mL/h").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Промени" }).click();
   await page.locator("label[for='mode-time']").click();
   await page.locator("#volume").fill("500");
   await page.locator("#time").fill("4");

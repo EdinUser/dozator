@@ -26,6 +26,8 @@ describe("calculator views", () => {
     expect(html).toContain("novalidate");
     expect(html).toContain("id=\"requiredDoseError\"");
     expect(html).toContain("class=\"invalid-feedback field-error\"");
+    expect(html).toContain("placeholder=\"125\"");
+    expect(html).not.toContain("value=\"125\"");
   });
 
   it("renders validation summary for current calculator formulas", () => {
