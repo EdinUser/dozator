@@ -13,7 +13,7 @@ test("home and calculator forms have no serious automated accessibility violatio
 
   for (const calculatorName of [
     /Доза от готов разтвор/,
-    /Разреждане до концентрация/,
+    /Разреждане до количество в 1 mL/,
     /Разтваряне на флакон/,
     /Инфузионна скорост/,
   ]) {

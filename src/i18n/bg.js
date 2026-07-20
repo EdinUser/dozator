@@ -11,21 +11,21 @@ export const bg = {
   calculators: {
     dose: {
       title: "Доза от готов разтвор",
-      subtitle: "Изчислява обема за изтегляне от налична концентрация.",
+      subtitle: "Изчислява обема за изтегляне от налично количество в известен обем.",
       homeDescription: "Колко mL да се изтеглят",
       menuDescription: "Обем за изтегляне",
     },
     dilution: {
-      title: "Разреждане до концентрация",
-      subtitle: "Изчислява лекарство и разтворител за желана крайна концентрация.",
+      title: "Разреждане до количество в 1 mL",
+      subtitle: "Изчислява крайния обем и разтворителя за желано количество лекарство в 1 mL.",
       homeDescription: "Колко лекарство и разтворител",
       menuDescription: "Лекарство плюс разтворител",
     },
     reconstitution: {
       title: "Разтваряне на флакон",
-      subtitle: "Изчислява концентрация след разтваряне и обем за изтегляне.",
-      homeDescription: "Крайна концентрация и обем",
-      menuDescription: "Концентрация след разтваряне",
+      subtitle: "Изчислява краен обем след разтваряне, количество в 1 mL и обем за изтегляне.",
+      homeDescription: "Краен обем и доза",
+      menuDescription: "Разтворен флакон",
     },
     infusion: {
       title: "Инфузионна скорост",
@@ -98,11 +98,10 @@ export const bg = {
       {
         title: "Формули",
         lines: [
-          "Доза от готов разтвор: доза / налична концентрация.",
-          "Разреждане към краен обем: V1 = (C2 x V2) / C1, разтворител = V2 - V1.",
-          "Разреждане на наличен обем: краен обем = (C1 x V1) / C2, разтворител = краен обем - V1.",
-          "Флакон: количество / краен разтворен обем.",
-          "Инфузия по дозова скорост: концентрация = количество / краен обем; mL/h = обща доза за час / концентрация.",
+          "Доза от готов разтвор: доза / налично количество в 1 mL.",
+          "Разреждане до количество в 1 mL: краен обем = общо количество / желано количество в 1 mL; разтворител = краен обем - обем на ампулата/флакона.",
+          "Флакон: количество в 1 mL = количество / краен разтворен обем; или краен обем = количество / желано количество в 1 mL.",
+          "Инфузия по дозова скорост: количество в 1 mL = количество / краен обем; mL/h = обща доза за час / количество в 1 mL.",
           "Инфузия по kg: /min се умножава по kg и по 60; /h се умножава по kg без x60.",
           "Инфузия по обем и време: mL/h = обем / време.",
         ],
@@ -146,7 +145,7 @@ export const bg = {
     medication: "Лекарство: __________",
     totalAmount: (value) => `Общо количество: ${value || "__________"}`,
     finalVolume: (value) => `Краен обем: ${value || "__________"}`,
-    concentration: (value) => `Концентрация: ${value || "__________"}`,
+    concentration: (value) => `Количество в 1 mL: ${value || "__________"}`,
     diluent: (value) => `Разтворител: ${value}`,
     preparedAt: (value) => `Подготвено: ${value}`,
     preparedBy: "Подготвено от: __________",
@@ -171,31 +170,23 @@ export const bg = {
       prescribedDose: "Назначена доза",
       dose: "Доза",
       availableSolution: "Наличен разтвор",
-      amount: "Количество",
-      inVolume: "В обем",
+      amount: "Количество лекарство в опаковката",
+      inVolume: "Обем на опаковката",
     },
     dilution: {
-      mode: "Режим",
-      modeAriaLabel: "Режим за разреждане",
-      prepareFinalVolumeMode: "Приготвяне на краен обем",
-      prepareFinalVolumeDescription: "Имате целеви краен обем и търсите колко разтвор и разтворител да използвате.",
-      diluteAvailableAmountMode: "Разреждане на наличен обем",
-      diluteAvailableAmountDescription: "Имате обем от наличния разтвор и търсите крайния обем след разреждане.",
-      availableConcentration: "Налична концентрация",
-      availableConcentrationValue: "Концентрация",
-      targetConcentration: "Желана концентрация",
-      targetConcentrationValue: "Концентрация",
-      finalQuantity: "Крайно количество",
-      finalVolume: "Краен обем",
-      availableQuantity: "Наличен обем",
-      stockVolume: "Обем от наличния разтвор",
+      container: "Ампула/флакон",
+      containerAmount: "Количество лекарство",
+      containerVolume: "Обем на ампулата/флакона",
+      target: "Желан краен разтвор",
+      targetAmountPerMl: "Желано количество в 1 mL",
     },
     reconstitution: {
       vial: "Флакон",
       vialAmount: "Количество лекарство във флакона",
       powderDissolving: "Разтваряне на праха",
-      diluentVolume: "Обем добавен разтворител",
-      finalVolumeAfterDissolving: "Краен обем след разтваряне",
+      diluentVolume: "Обем добавен разтворител, ако е известен",
+      finalVolumeAfterDissolving: "Краен обем след разтваряне, ако е известен",
+      targetAmountPerMl: "Желано количество в 1 mL",
       optionalDose: "Ако трябва конкретна доза",
       doseToWithdraw: "Доза, която трябва да се изтегли",
     },
@@ -220,6 +211,14 @@ export const bg = {
       highAlertLabel: "Лекарството е определено като високорисково според местния протокол",
       diluentLabel: "Име на използвания разтворител",
       diluentPlaceholder: "попълва се от инструкция, аптека или протокол",
+      dosePlaceholder: "въведете доза",
+      amountPlaceholder: "въведете количество",
+      volumePlaceholder: "въведете обем",
+      amountPerMlPlaceholder: "въведете количество в 1 mL",
+      weightPlaceholder: "въведете kg",
+      ratePlaceholder: "по назначение",
+      hoursPlaceholder: "часове",
+      timePlaceholder: "въведете време",
       unitAriaLabel: (label) => `${label} единица`,
     },
   },
@@ -227,14 +226,10 @@ export const bg = {
     prescribedDose: "Назначена доза",
     availableAmount: "Налично количество",
     availableVolume: "Наличен обем",
-    availableConcentration: "Налична концентрация",
-    availableConcentrationAmount: "Налична концентрация - количество",
-    availableConcentrationVolume: "Налична концентрация - обем",
-    targetConcentration: "Желана концентрация",
-    targetConcentrationAmount: "Желана концентрация - количество",
-    targetConcentrationVolume: "Желана концентрация - обем",
+    targetAmountPerMl: "Желано количество в 1 mL",
+    containerAmount: "Количество лекарство в ампула/флакон",
+    containerVolume: "Обем на ампула/флакон",
     finalVolume: "Краен обем",
-    stockVolume: "Обем от наличния разтвор",
     vialAmount: "Количество във флакона",
     diluentAdded: "Добавен разтворител",
     finalReconstitutedVolume: "Краен разтворен обем",
@@ -252,30 +247,34 @@ export const bg = {
       finalDose: (amount) => `Назначена доза: ${amount}`,
     },
     dilution: {
-      impossibleTarget: "Желаната концентрация е по-висока от наличната. Това не може да се получи чрез разреждане.",
+      impossibleTarget: "Желаното количество в 1 mL е по-високо от наличното. Това не може да се получи чрез разреждане.",
       medicationVolumeGreaterThanFinal: "Необходимият обем от лекарството е по-голям от крайния обем.",
-      withdraw: (volume) => `Изтеглете ${volume} от първоначалния разтвор.`,
+      useContainer: (amount, volume) => `Използвайте ${amount} в ${volume} от ампулата/флакона.`,
       addDiluent: (volume) => `Добавете ${volume} от посочения разтворител.`,
       finalVolume: (volume) => `Краен обем: ${volume}.`,
-      finalConcentration: (concentration) => `Крайна концентрация: ${concentration}.`,
+      finalConcentration: (concentration) => `Крайно количество в 1 mL: ${concentration}.`,
       totalAmount: (amount) => `Общо количество: ${amount}`,
       finalVolumeLine: (volume) => `Краен обем: ${volume}`,
-      finalConcentrationLine: (concentration) => `Крайна концентрация: ${concentration}`,
-      recipe: (medicationVolume, diluentVolume) => `Изтеглете ${medicationVolume} лекарство. Добавете ${diluentVolume} разтворител.`,
+      finalConcentrationLine: (concentration) => `Количество в 1 mL: ${concentration}`,
+      recipe: (medicationVolume, diluentVolume) => `Използвайте ${medicationVolume} от ампулата/флакона. Добавете ${diluentVolume} разтворител.`,
     },
     reconstitution: {
       addDiluent: (volume) => `Добавете ${volume} от посочения разтворител към флакона.`,
       useFinalVolume: (volume) => `Използвайте крайния разтворен обем от инструкцията: ${volume}.`,
-      resultingConcentration: (concentration) => `Получена концентрация: ${concentration}.`,
+      neededFinalVolume: (volume) => `Необходим краен обем след разтваряне: ${volume}.`,
+      finalVolumeCaution: "Проверете в инструкцията дали добавеният разтворител е равен на крайния обем.",
+      missingVolumeOrTarget: "Попълнете краен обем след разтваряне или желано количество в 1 mL.",
+      resultingConcentration: (concentration) => `Получено количество в 1 mL: ${concentration}.`,
       vialAmount: (amount) => `Количество във флакона: ${amount}`,
       finalVolume: (volume) => `Краен разтворен обем: ${volume}`,
-      concentration: (concentration) => `Концентрация: ${concentration}`,
+      concentration: (concentration) => `Количество в 1 mL: ${concentration}`,
       baseRecipe: (diluentVolume, finalVolume) => `Добавете ${diluentVolume} разтворител. Краен разтворен обем: ${finalVolume}.`,
+      finalVolumeRecipe: (finalVolume) => `Краен разтворен обем: ${finalVolume}.`,
       doseWithdraw: (amount, volume) => `За доза ${amount} изтеглете ${volume}.`,
       doseLine: (amount) => `Доза за изтегляне: ${amount}`,
     },
     infusion: {
-      concentration: (concentration) => `Концентрация в инфузията: ${concentration}.`,
+      concentration: (concentration) => `Количество лекарство в 1 mL от инфузията: ${concentration}.`,
       setPump: (rate) => `Настройте помпата на ${rate} mL/h.`,
       amount: (amount) => `Количество: ${amount}`,
       finalVolume: (volume) => `Краен обем: ${volume}`,
@@ -293,17 +292,11 @@ export const bg = {
     dose: (values) =>
       `${values.requiredDose} ${values.requiredDoseUnit} от ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
     dilution: (values) =>
-      values.availableConcentration
-        ? `${values.availableConcentration} ${values.availableConcentrationUnit} към ${values.targetConcentration} ${values.targetConcentrationUnit}, ${
-            values.mode === "diluteAvailableAmount"
-              ? `${values.stockVolume} ${values.stockVolumeUnit}`
-              : `${values.finalVolume} ${values.finalVolumeUnit}`
-          }`
-        : `${values.availableAmount} ${values.availableAmountUnit}/${values.availableVolume} ${values.availableVolumeUnit} към ${values.targetAmount} ${values.targetAmountUnit}/${values.targetVolume} ${values.targetVolumeUnit}, ${values.finalVolume} ${values.finalVolumeUnit}`,
+      `${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit} към ${values.targetConcentration} ${values.targetConcentrationUnit}`,
     reconstitution: (values) =>
       values.requiredDose
-        ? `${values.vialAmount} ${values.vialAmountUnit}, ${values.finalVolume} ${values.finalVolumeUnit}, доза ${values.requiredDose} ${values.requiredDoseUnit}`
-        : `${values.vialAmount} ${values.vialAmountUnit}, ${values.finalVolume} ${values.finalVolumeUnit}`,
+        ? `${values.vialAmount} ${values.vialAmountUnit}${values.finalVolume ? `, ${values.finalVolume} ${values.finalVolumeUnit}` : ""}, доза ${values.requiredDose} ${values.requiredDoseUnit}`
+        : `${values.vialAmount} ${values.vialAmountUnit}${values.finalVolume ? `, ${values.finalVolume} ${values.finalVolumeUnit}` : ""}${values.targetConcentration ? `, ${values.targetConcentration} ${values.targetConcentrationUnit}` : ""}`,
     infusion: (values) =>
       values.mode === "volumeTime"
         ? `${values.volume} ${values.volumeUnit} за ${values.time} ${values.timeUnit}`
@@ -315,24 +308,14 @@ export const bg = {
       `Налично: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
     ],
     dilution: (values) => [
-      ...(values.availableConcentration
-        ? [
-            `Налична концентрация: ${values.availableConcentration} ${values.availableConcentrationUnit}`,
-            `Желана концентрация: ${values.targetConcentration} ${values.targetConcentrationUnit}`,
-            ...(values.mode === "diluteAvailableAmount"
-              ? [`Обем от наличния разтвор: ${values.stockVolume} ${values.stockVolumeUnit}`]
-              : [`Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`]),
-          ]
-        : [
-            `Налично: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
-            `Желано: ${values.targetAmount} ${values.targetAmountUnit} в ${values.targetVolume} ${values.targetVolumeUnit}`,
-            `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`,
-          ]),
+      `Ампула/флакон: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
+      `Желано количество в 1 mL: ${values.targetConcentration} ${values.targetConcentrationUnit}`,
     ],
     reconstitution: (values) => [
       `Флакон: ${values.vialAmount} ${values.vialAmountUnit}`,
-      `Разтворител: ${values.diluentVolume} ${values.diluentVolumeUnit}`,
-      `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`,
+      ...(values.diluentVolume ? [`Разтворител: ${values.diluentVolume} ${values.diluentVolumeUnit}`] : []),
+      ...(values.finalVolume ? [`Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`] : []),
+      ...(values.targetConcentration ? [`Желано количество в 1 mL: ${values.targetConcentration} ${values.targetConcentrationUnit}`] : []),
     ],
     infusion: (values) =>
       values.mode === "volumeTime"
