@@ -26,7 +26,7 @@ describe("calculator views", () => {
     expect(html).toContain("novalidate");
     expect(html).toContain("id=\"requiredDoseError\"");
     expect(html).toContain("class=\"invalid-feedback field-error\"");
-    expect(html).toContain("placeholder=\"125\"");
+    expect(html).toContain("placeholder=\"въведете доза\"");
     expect(html).not.toContain("value=\"125\"");
   });
 
@@ -34,8 +34,8 @@ describe("calculator views", () => {
     const html = renderClinicalValidationScreen();
 
     expect(html).toContain("1% се приема като 10 mg/mL");
-    expect(html).toContain("Разреждане към краен обем");
-    expect(html).toContain("Разреждане на наличен обем");
+    expect(html).toContain("Разреждане до количество в 1 mL");
+    expect(html).toContain("краен обем = общо количество / желано количество в 1 mL");
     expect(html).toContain("/min се умножава по kg и по 60");
     expect(html).toContain("/h се умножава по kg без x60");
   });

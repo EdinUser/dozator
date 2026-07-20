@@ -73,7 +73,7 @@ test("QR URL restore sanitizes free-text fields and recalculates locally", async
 test("initial form examples are placeholders and focused values are selected", async ({ page }) => {
   await page.goto("/#dose");
   await expect(page.locator("#requiredDose")).toHaveValue("");
-  await expect(page.locator("#requiredDose")).toHaveAttribute("placeholder", "125");
+  await expect(page.locator("#requiredDose")).toHaveAttribute("placeholder", "въведете доза");
 
   await page.locator("#requiredDose").fill("125");
   await page.locator("#availableAmount").fill("250");
@@ -92,7 +92,7 @@ test("initial form examples are placeholders and focused values are selected", a
 test("screen hash URLs load and survive reload", async ({ page }) => {
   for (const route of [
     { hash: "dose", heading: "Доза от готов разтвор" },
-    { hash: "dilution", heading: "Разреждане до концентрация" },
+    { hash: "dilution", heading: "Разреждане до количество в 1 mL" },
     { hash: "reconstitution", heading: "Разтваряне на флакон" },
     { hash: "infusion", heading: "Инфузионна скорост" },
     { hash: "validation", heading: "Как са проверени изчисленията" },

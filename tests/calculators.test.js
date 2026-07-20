@@ -69,32 +69,14 @@ describe("dose calculator", () => {
 });
 
 describe("dilution calculator", () => {
-  it("calculates medication and diluent volumes", () => {
+  it("calculates final volume and diluent from an ampoule or vial", () => {
     const result = calculateDilution({
-      mode: "prepareFinalVolume",
-      availableConcentration: "10",
-      availableConcentrationUnit: "mg/mL",
+      availableAmount: "40",
+      availableAmountUnit: "mg",
+      availableVolume: "4",
+      availableVolumeUnit: "mL",
       targetConcentration: "2",
       targetConcentrationUnit: "mg/mL",
-      finalVolume: "20",
-      finalVolumeUnit: "mL",
-      highAlert: false,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.primary).toBe("4 mL");
-    expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
-  });
-
-  it("calculates final volume when diluting a known stock volume", () => {
-    const result = calculateDilution({
-      mode: "diluteAvailableAmount",
-      availableConcentration: "10",
-      availableConcentrationUnit: "mg/mL",
-      targetConcentration: "2",
-      targetConcentrationUnit: "mg/mL",
-      stockVolume: "4",
-      stockVolumeUnit: "mL",
       highAlert: false,
     });
 
@@ -103,38 +85,52 @@ describe("dilution calculator", () => {
     expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
   });
 
-  it("rejects target concentration above available concentration", () => {
+  it("allows no-diluent case when target equals available amount in 1 mL", () => {
     const result = calculateDilution({
-      mode: "prepareFinalVolume",
-      availableConcentration: "2",
-      availableConcentrationUnit: "mg/mL",
+      availableAmount: "20",
+      availableAmountUnit: "mg",
+      availableVolume: "10",
+      availableVolumeUnit: "mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "mg/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.instructions).toContain("Добавете 0 mL от посочения разтворител.");
+  });
+
+  it("rejects target amount in 1 mL above the available amount in 1 mL", () => {
+    const result = calculateDilution({
+      availableAmount: "4",
+      availableAmountUnit: "mg",
+      availableVolume: "2",
+      availableVolumeUnit: "mL",
       targetConcentration: "10",
       targetConcentrationUnit: "mg/mL",
-      finalVolume: "20",
-      finalVolumeUnit: "mL",
       highAlert: false,
     });
 
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain("по-висока");
+    expect(result.errors[0]).toContain("по-високо");
     expect(result.fieldErrors.map((field) => field.name)).toEqual(["targetConcentration"]);
   });
 
   it("shows conversion notices for concentration units", () => {
     const result = calculateDilution({
-      mode: "prepareFinalVolume",
-      availableConcentration: "1",
-      availableConcentrationUnit: "mg/mL",
-      targetConcentration: "100",
+      availableAmount: "10",
+      availableAmountUnit: "mg",
+      availableVolume: "1",
+      availableVolumeUnit: "mL",
+      targetConcentration: "500",
       targetConcentrationUnit: "µg/mL",
-      finalVolume: "20",
-      finalVolumeUnit: "mL",
       highAlert: false,
     });
 
     expect(result.ok).toBe(true);
-    expect(result.primary).toBe("2 mL");
-    expect(result.notices).toContain("100 µg/mL = 0.1 mg/mL");
+    expect(result.primary).toBe("20 mL");
+    expect(result.notices).toContain("500 µg/mL = 0.5 mg/mL");
   });
 });
 
@@ -153,8 +149,29 @@ describe("reconstitution calculator", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.finalLines).toContain("Концентрация: 100 mg/mL");
+    expect(result.finalLines).toContain("Количество в 1 mL: 100 mg/mL");
     expect(result.primary).toBe("3.5 mL");
+  });
+
+  it("calculates needed final volume from desired amount in 1 mL", () => {
+    const result = calculateReconstitution({
+      vialAmount: "1",
+      vialAmountUnit: "g",
+      diluentVolume: "",
+      diluentVolumeUnit: "mL",
+      finalVolume: "",
+      finalVolumeUnit: "mL",
+      targetConcentration: "100",
+      targetConcentrationUnit: "mg/mL",
+      requiredDose: "",
+      requiredDoseUnit: "mg",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.instructions).toContain("Необходим краен обем след разтваряне: 10 mL.");
+    expect(result.instructions).toContain("Проверете в инструкцията дали добавеният разтворител е равен на крайния обем.");
   });
 });
 

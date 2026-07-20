@@ -71,35 +71,33 @@ describe("dose calculation guards", () => {
 });
 
 describe("dilution calculation guards", () => {
-  it("handles direct concentration unit conversions", () => {
+  it("handles unit conversions", () => {
     const result = calculateDilution({
-      mode: "prepareFinalVolume",
-      availableConcentration: "1",
-      availableConcentrationUnit: "%",
+      availableAmount: "10",
+      availableAmountUnit: "mg",
+      availableVolume: "0.001",
+      availableVolumeUnit: "L",
       targetConcentration: "500",
       targetConcentrationUnit: "µg/mL",
-      finalVolume: "0.02",
-      finalVolumeUnit: "L",
       highAlert: false,
     });
 
     expect(result.ok).toBe(true);
-    expect(result.primary).toBe("1 mL");
+    expect(result.primary).toBe("20 mL");
     expect(result.instructions).toContain("Добавете 19 mL от посочения разтворител.");
-    expect(result.notices).toEqual(["1 % = 10 mg/mL", "500 µg/mL = 0.5 mg/mL", "0.02 L = 20 mL"]);
-    expect(result.traces).toContain("500 µg/mL × 20 mL = 10 mg");
-    expect(result.traces).toContain("10 mg ÷ 10 mg/mL = 1 mL");
+    expect(result.notices).toEqual(["0.001 L = 1 mL", "500 µg/mL = 0.5 mg/mL"]);
+    expect(result.traces).toContain("10 mg ÷ 1 mL = 10 mg/mL");
+    expect(result.traces).toContain("10 mg ÷ 500 µg/mL = 20 mL");
   });
 
-  it("allows no-diluent case when target equals available concentration", () => {
+  it("allows no-diluent case when target equals available amount in 1 mL", () => {
     const result = calculateDilution({
-      mode: "prepareFinalVolume",
-      availableConcentration: "2",
-      availableConcentrationUnit: "mg/mL",
+      availableAmount: "20",
+      availableAmountUnit: "mg",
+      availableVolume: "10",
+      availableVolumeUnit: "mL",
       targetConcentration: "2",
       targetConcentrationUnit: "mg/mL",
-      finalVolume: "10",
-      finalVolumeUnit: "mL",
       highAlert: false,
     });
 
@@ -108,61 +106,24 @@ describe("dilution calculation guards", () => {
     expect(result.instructions).toContain("Добавете 0 mL от посочения разтворител.");
   });
 
-  it("calculates final volume from a stock volume", () => {
-    const result = calculateDilution({
-      mode: "diluteAvailableAmount",
-      availableConcentration: "10",
-      availableConcentrationUnit: "mg/mL",
-      targetConcentration: "2",
-      targetConcentrationUnit: "mg/mL",
-      stockVolume: "0.004",
-      stockVolumeUnit: "L",
-      highAlert: false,
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.primary).toBe("20 mL");
-    expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
-    expect(result.notices).toEqual(["0.004 L = 4 mL"]);
-    expect(result.traces).toContain("10 mg/mL × 4 mL = 40 mg");
-    expect(result.traces).toContain("40 mg ÷ 2 mg/mL = 20 mL");
-  });
-
   it.each([
-    ["availableConcentration", "0"],
+    ["availableAmount", "0"],
+    ["availableVolume", "0"],
     ["targetConcentration", "0"],
-    ["finalVolume", "0"],
   ])("rejects invalid %s", (field, value) => {
     const input = {
-      mode: "prepareFinalVolume",
-      availableConcentration: "1",
-      availableConcentrationUnit: "mg/mL",
+      availableAmount: "20",
+      availableAmountUnit: "mg",
+      availableVolume: "10",
+      availableVolumeUnit: "mL",
       targetConcentration: "1",
       targetConcentrationUnit: "mg/mL",
-      finalVolume: "1",
-      finalVolumeUnit: "mL",
       highAlert: false,
     };
 
     const result = calculateDilution({ ...input, [field]: value });
     expect(result.ok).toBe(false);
     expect(result.fieldErrors[0]).toMatchObject({ name: field });
-  });
-
-  it("rejects invalid stock volume in dilute available amount mode", () => {
-    const result = calculateDilution({
-      mode: "diluteAvailableAmount",
-      availableConcentration: "1",
-      availableConcentrationUnit: "mg/mL",
-      targetConcentration: "1",
-      targetConcentrationUnit: "mg/mL",
-      stockVolume: "0",
-      stockVolumeUnit: "mL",
-      highAlert: false,
-    });
-
-    expect(result.ok).toBe(false);
-    expect(result.fieldErrors[0]).toMatchObject({ name: "stockVolume" });
   });
 });
 
@@ -237,6 +198,45 @@ describe("reconstitution calculation guards", () => {
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("0.05 mL");
     expect(result.warnings).toContain("Изчисленият обем е под 0.1 mL и може да не бъде измерим точно с избраната спринцовка.");
+  });
+
+  it("calculates final volume when target amount in 1 mL is provided instead of final volume", () => {
+    const result = calculateReconstitution({
+      vialAmount: "500",
+      vialAmountUnit: "mg",
+      diluentVolume: "",
+      diluentVolumeUnit: "mL",
+      finalVolume: "",
+      finalVolumeUnit: "mL",
+      targetConcentration: "50",
+      targetConcentrationUnit: "mg/mL",
+      requiredDose: "",
+      requiredDoseUnit: "mg",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.traces).toEqual(["500 mg ÷ 10 mL = 50 mg/mL"]);
+  });
+
+  it("requires either final volume or desired amount in 1 mL", () => {
+    const result = calculateReconstitution({
+      vialAmount: "500",
+      vialAmountUnit: "mg",
+      diluentVolume: "",
+      diluentVolumeUnit: "mL",
+      finalVolume: "",
+      finalVolumeUnit: "mL",
+      targetConcentration: "",
+      targetConcentrationUnit: "mg/mL",
+      requiredDose: "",
+      requiredDoseUnit: "mg",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["finalVolume", "targetConcentration"]);
   });
 });
 
