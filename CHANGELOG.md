@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Simplify dilution around ampoule/vial amount, ampoule/vial volume, and desired amount in 1 mL.
+- Add reconstitution flow for calculating needed final volume from desired amount in 1 mL.
+- Replace numeric input placeholders with short text placeholders.
+- Update shared calculation fields, validation copy, and tests for the simplified calculator models.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.2.0
 
 - Redesign dilution around direct concentration inputs and explicit final-volume / available-volume workflows.
