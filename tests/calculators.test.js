@@ -101,6 +101,21 @@ describe("dilution calculator", () => {
     expect(result.instructions).toContain("Добавете 0 mL от посочения разтворител.");
   });
 
+  it("keeps percent target visible in the preparation summary", () => {
+    const result = calculateDilution({
+      availableAmount: "2",
+      availableAmountUnit: "g",
+      availableVolume: "1",
+      availableVolumeUnit: "mL",
+      targetConcentration: "3",
+      targetConcentrationUnit: "%",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.instructions).toContain("Крайно количество в 1 mL: 30 mg/mL, което е 3% разтвор.");
+  });
+
   it("rejects target amount in 1 mL above the available amount in 1 mL", () => {
     const result = calculateDilution({
       availableAmount: "4",
@@ -231,9 +246,9 @@ describe("infusion calculators", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.primary).toBe("0.0875 mL/h");
+    expect(result.primary).toBe("0.088 mL/h");
     expect(result.traces).toContain("5 µg/kg/h × 70 kg = 0.35 mg/h");
-    expect(result.traces).toContain("0.35 mg/h ÷ 4 mg/mL = 0.0875 mL/h");
+    expect(result.traces).toContain("0.35 mg/h ÷ 4 mg/mL = 0.088 mL/h");
   });
 
   it("calculates optional volume speed from hours to run", () => {

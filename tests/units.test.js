@@ -82,5 +82,7 @@ describe("safety formatting", () => {
 
   it("formats volumes with leading zeroes", () => {
     expect(formatVolumeMl(0.05)).toBe("0.05 mL");
+    expect(formatVolumeMl(0.005)).toBe("0.005 mL");
+    expect(formatVolumeMl(66.666667)).toBe("66.67 mL");
   });
 });

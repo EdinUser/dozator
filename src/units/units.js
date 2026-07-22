@@ -68,7 +68,7 @@ export function volumeConversionTrace(value, fromUnit, toUnit) {
     return null;
   }
 
-  return `${formatNumber(value)} ${fromUnit} = ${formatNumber(fromMl(toMl(value, fromUnit), toUnit))} ${toUnit}`;
+  return `${formatVolumeValue(value, fromUnit)} ${fromUnit} = ${formatVolumeValue(fromMl(toMl(value, fromUnit), toUnit), toUnit)} ${toUnit}`;
 }
 
 export function concentrationToMgPerMl(amount, amountUnit, volume, volumeUnit) {
@@ -103,22 +103,30 @@ export function directConcentrationConversionTrace(value, unit) {
   return `${formatNumber(value)} ${unit} = ${formatNumber(concentration)} mg/mL`;
 }
 
-export function formatNumber(value) {
+export function formatNumber(value, maximumFractionDigits = 6) {
   const number = parseDecimal(value);
 
   if (!Number.isFinite(number)) {
     return "";
   }
 
-  const rounded = Number.parseFloat(number.toFixed(6));
+  const rounded = Number.parseFloat(number.toFixed(maximumFractionDigits));
   return rounded.toLocaleString("en-US", {
-    maximumFractionDigits: 6,
+    maximumFractionDigits,
     useGrouping: false,
   });
 }
 
 export function formatVolumeMl(value) {
-  return `${formatNumber(value)} mL`;
+  return `${formatVolumeNumber(value)} mL`;
+}
+
+export function formatVolumeRateMlPerHour(value) {
+  return `${formatVolumeNumber(value)} mL/h`;
+}
+
+export function formatVolumeNumber(value) {
+  return formatNumber(value, volumeFractionDigits(value));
 }
 
 export function formatMassMg(value) {
@@ -139,4 +147,13 @@ export function formatConcentrationMgPerMl(value) {
   }
 
   return `${formatNumber(value)} mg/mL`;
+}
+
+function formatVolumeValue(value, unit) {
+  return formatNumber(value, unit === "mL" ? volumeFractionDigits(value) : 6);
+}
+
+function volumeFractionDigits(value) {
+  const number = parseDecimal(value);
+  return Math.abs(number) < 0.1 && number !== 0 ? 3 : 2;
 }

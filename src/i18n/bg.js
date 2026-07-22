@@ -252,7 +252,8 @@ export const bg = {
       useContainer: (amount, volume) => `Използвайте ${amount} в ${volume} от ампулата/флакона.`,
       addDiluent: (volume) => `Добавете ${volume} от посочения разтворител.`,
       finalVolume: (volume) => `Краен обем: ${volume}.`,
-      finalConcentration: (concentration) => `Крайно количество в 1 mL: ${concentration}.`,
+      finalConcentration: (concentration, solutionDescription = "") =>
+        `Крайно количество в 1 mL: ${concentration}${solutionDescription ? `, което е ${solutionDescription}` : ""}.`,
       totalAmount: (amount) => `Общо количество: ${amount}`,
       finalVolumeLine: (volume) => `Краен обем: ${volume}`,
       finalConcentrationLine: (concentration) => `Количество в 1 mL: ${concentration}`,

@@ -39,6 +39,8 @@ export function calculateDilution(input) {
 
   const finalMl = medicationMg / targetMgPerMl;
   const diluentMl = finalMl - medicationMl;
+  const targetSolutionDescription =
+    input.targetConcentrationUnit === "%" ? `${formatNumber(input.targetConcentration)}% разтвор` : "";
   const notices = [
     massConversionTrace(input.availableAmount, input.availableAmountUnit, "mg"),
     volumeConversionTrace(input.availableVolume, input.availableVolumeUnit, "mL"),
@@ -52,7 +54,7 @@ export function calculateDilution(input) {
       bg.calculations.dilution.useContainer(formatMassMg(medicationMg), formatVolumeMl(medicationMl)),
       bg.calculations.dilution.addDiluent(formatVolumeMl(diluentMl)),
       bg.calculations.dilution.finalVolume(formatVolumeMl(finalMl)),
-      bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl)),
+      bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl), targetSolutionDescription),
     ],
     finalLines: [
       bg.calculations.dilution.totalAmount(formatMassMg(medicationMg)),

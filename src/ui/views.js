@@ -85,12 +85,12 @@ export function renderResultPanel(result) {
         <strong>${result.primary}</strong>
       </div>
       ${result.warnings.length ? `<div class="alert alert-warning" role="alert">${result.warnings.map((warning) => `<div>${warning}</div>`).join("")}</div>` : ""}
-      ${result.notices?.length ? renderNoticeBlock(result.notices) : ""}
-      <div class="result-block">
+      <div class="result-block result-preparation">
         <h2>${bg.result.preparation}</h2>
-        ${result.instructions.map((line) => `<p>${line}</p>`).join("")}
+        ${result.instructions.map((line, index) => `<p class="${index === 0 ? "result-instruction-primary" : ""}">${line}</p>`).join("")}
       </div>
-      <div class="result-block">
+      ${result.notices?.length ? renderNoticeBlock(result.notices) : ""}
+      <div class="result-block result-verification">
         <h2>${bg.result.verification}</h2>
         ${result.traces.map((line) => `<code>${line}</code>`).join("")}
       </div>
