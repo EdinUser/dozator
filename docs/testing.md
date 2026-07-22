@@ -17,6 +17,7 @@ npm test
 npm run build
 npm run test:e2e
 npm run test:all
+npm run screenshots:docs
 ```
 
 Преди първото локално пускане на E2E тестовете инсталирайте Chromium за Playwright:
@@ -32,6 +33,8 @@ npx playwright install chromium
 - Нулеви, отрицателни, липсващи и невъзможни стойности трябва да връщат грешка към конкретното поле.
 - Restore от QR, история и шаблон трябва да преизчислява локално и да показва предупреждение за повторна проверка.
 - E2E тестовете трябва да проверяват както числения резултат, така и видимия текст на инструкцията.
+- Документационните screenshots се генерират отделно с `npm run screenshots:docs`; това не е assertion suite.
+- При промяна на калкулатор, формула, инструкция, rounding или примерен UI, проверете дали `src/docs/bg/documentation.js` и `public/docs/screenshots/*.png` трябва да се обновят.
 
 ## Какво Пази Всеки Test File
 
@@ -46,12 +49,13 @@ npx playwright install chromium
 - `tests/pwa.test.js`: service worker asset extraction и cache behavior helpers.
 - `tests/e2e/calculators.spec.js`: реални calculator workflows през UI.
 - `tests/e2e/restore-and-offline.spec.js`: QR restore, history restore, template restore и offline reload.
-- `tests/e2e/accessibility.spec.js`: automated accessibility checks и keyboard path.
+- `tests/e2e/accessibility.spec.js`: automated accessibility checks, documentation page и keyboard path.
 
 ## Кога Да Се Добавя Тест
 
 - Формула или unit conversion: unit test плюс golden test.
 - Текст на инструкция или label: golden test плюс E2E assertion, ако текстът е user-visible в основен workflow.
+- User-facing calculator промяна: обновете документационния текст и screenshots, когато примерът или описанието вече не съответства.
 - Ново form поле: unit/golden, share allowlist test, restore E2E и history/template check.
 - Safety warning: unit/regression test и поне един UI/E2E assertion, ако warning-ът е видим.
 - PWA/service worker промяна: unit test за helper behavior и offline E2E.

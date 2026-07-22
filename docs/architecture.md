@@ -57,7 +57,8 @@
 
 ## Hash Navigation
 
-- Екраните имат директни hash маршрути: `#dose`, `#dilution`, `#reconstitution`, `#infusion` и `#validation`.
+- Екраните имат директни hash маршрути: `#dose`, `#dilution`, `#reconstitution`, `#infusion`, `#validation` и `#/documentation`.
+- Документацията има section маршрути `#/documentation/dose`, `#/documentation/dilution`, `#/documentation/reconstitution` и `#/documentation/infusion`.
 - Reload на тези URL-и трябва да оставя потребителя на същия екран.
 - `#calc=` е запазен само за QR/share restore payload и не трябва да се използва за обикновена навигация.
 

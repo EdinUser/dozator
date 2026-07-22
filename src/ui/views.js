@@ -1,4 +1,5 @@
 import { bg } from "../i18n/bg.js";
+import { documentation } from "../docs/bg/documentation.js";
 
 export function renderHomeScreen() {
   return `
@@ -28,16 +29,85 @@ export function renderMenuItems() {
 export function renderCalculatorScreen(calculator) {
   return `
     <section class="calculator-screen">
-      <button type="button" class="btn btn-link px-0 mb-3" data-action="home">${bg.actions.back}</button>
+      <div class="calculator-top-actions">
+        <button type="button" class="btn btn-outline-primary btn-sm calculator-back-button" data-action="home">
+          ${icon("arrow-left")}
+          <span>${bg.actions.back}</span>
+        </button>
+        ${
+          calculator.key
+            ? `<a class="btn btn-outline-primary btn-sm calculator-docs-button" href="#/documentation/${calculator.key}">
+                ${icon("circle-help")}
+                <span>${bg.actions.help}</span>
+              </a>`
+            : "<span></span>"
+        }
+        <button type="button" class="btn btn-outline-primary btn-sm calculator-history-button" data-action="show-calculator-history">
+          ${icon("history")}
+          <span>${bg.actions.history}</span>
+        </button>
+      </div>
       <div class="section-heading">
         <div class="section-title">
           <h1>${calculator.title}</h1>
           <p>${calculator.subtitle}</p>
         </div>
-        <button type="button" class="btn btn-outline-primary btn-sm calculator-history-button" data-action="show-calculator-history">${bg.actions.history}</button>
       </div>
       ${formTemplates[calculator.render]()}
       <div id="result" class="mt-4"></div>
+    </section>
+  `;
+}
+
+function icon(name) {
+  const icons = {
+    "arrow-left": '<path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path>',
+    calculator: '<rect width="16" height="20" x="4" y="2" rx="2"></rect><path d="M8 6h8"></path><path d="M8 10h.01"></path><path d="M12 10h.01"></path><path d="M16 10h.01"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path>',
+    "circle-help": '<circle cx="12" cy="12" r="10"></circle><path d="M9.1 9a3 3 0 1 1 5.8 1c-.7 1.2-1.9 1.6-2.4 2.5"></path><path d="M12 17h.01"></path>',
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 3v6h6"></path><path d="M12 7v5l3 2"></path>',
+    home: '<path d="m3 10 9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path>',
+  };
+
+  return `
+    <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${icons[name]}
+    </svg>
+  `;
+}
+
+export function renderDocumentationScreen(activeSection = "") {
+  return `
+    <section class="documentation-screen">
+      <div class="documentation-top-actions">
+        <button type="button" class="btn btn-outline-primary btn-sm documentation-back-button" data-action="go-back">
+          ${icon("arrow-left")}
+          <span>${bg.actions.back}</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm documentation-home-button" data-action="home">
+          ${icon("home")}
+          <span>${bg.app.home}</span>
+        </button>
+      </div>
+      <div class="section-heading">
+        <div class="section-title">
+          <h1>${documentation.title}</h1>
+          <p>${documentation.intro}</p>
+        </div>
+      </div>
+      <nav class="documentation-nav" aria-label="${documentation.title}">
+        ${documentation.calculators.map((calculator) => `<a href="#/documentation/${calculator.id}" class="${calculator.id === activeSection ? "is-active" : ""}">${calculator.title}</a>`).join("")}
+      </nav>
+      <section class="documentation-overview">
+        <h2>${documentation.workflow.title}</h2>
+        ${renderBulletList(documentation.workflow.lines)}
+      </section>
+      <div class="documentation-list">
+        ${documentation.calculators.map((calculator) => renderDocumentationCalculator(calculator, calculator.id === activeSection)).join("")}
+      </div>
+      <section class="documentation-overview">
+        <h2>${documentation.safety.title}</h2>
+        ${renderBulletList(documentation.safety.lines)}
+      </section>
     </section>
   `;
 }
@@ -67,6 +137,58 @@ export function renderClinicalValidationScreen() {
       <p class="form-text">${bg.validation.documentNote}</p>
     </section>
   `;
+}
+
+function renderDocumentationCalculator(calculator, isActive) {
+  return `
+    <article class="documentation-calculator ${isActive ? "is-active" : ""}" id="documentation-${calculator.id}" tabindex="-1">
+      <div class="documentation-calculator-body">
+        <div class="documentation-calculator-heading">
+          <h2>${calculator.title}</h2>
+          <a class="btn btn-outline-primary btn-sm documentation-calculator-link" href="#${calculator.id}">
+            ${icon("calculator")}
+            <span>${bg.actions.openCalculator}</span>
+          </a>
+        </div>
+        <section>
+          <h3>Какво се изчислява</h3>
+          <p>${calculator.what}</p>
+        </section>
+        <section>
+          <h3>Какво въвеждате</h3>
+          ${renderBulletList(calculator.inputs)}
+        </section>
+        <section>
+          <h3>Какво получавате</h3>
+          <p>${calculator.result}</p>
+        </section>
+        <section>
+          <h3>Как се изчислява</h3>
+          ${renderFormulaList(calculator.formula)}
+        </section>
+        <section>
+          <h3>Пример</h3>
+          <p>${calculator.example}</p>
+        </section>
+        <section>
+          <h3>Ограничения</h3>
+          ${renderBulletList(calculator.limits)}
+        </section>
+      </div>
+      <figure class="documentation-figure">
+        <figcaption>Примерен екран</figcaption>
+        <img src="${calculator.screenshot}" width="${calculator.screenshotWidth}" height="${calculator.screenshotHeight}" alt="${calculator.screenshotAlt}" loading="lazy">
+      </figure>
+    </article>
+  `;
+}
+
+function renderBulletList(lines) {
+  return `<ul>${lines.map((line) => `<li>${line}</li>`).join("")}</ul>`;
+}
+
+function renderFormulaList(lines) {
+  return `<div class="documentation-formulas">${lines.map((line) => `<code>${line}</code>`).join("")}</div>`;
 }
 
 export function renderResultPanel(result) {
