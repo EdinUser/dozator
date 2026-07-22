@@ -526,6 +526,7 @@ function focusDocumentationSection(section) {
 
     target.scrollIntoView({ block: "start" });
     target.focus({ preventScroll: true });
+    updateScrollTopButton();
   });
 }
 
@@ -536,7 +537,12 @@ function updateScrollTopButton() {
     return;
   }
 
-  button.hidden = window.scrollY < 320;
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  const scrollTop = scrollingElement.scrollTop || window.scrollY;
+  const canScroll = scrollingElement.scrollHeight - scrollingElement.clientHeight > 1;
+  const threshold = window.matchMedia("(max-width: 575px)").matches ? 48 : 320;
+
+  button.hidden = !canScroll || scrollTop < threshold;
 }
 
 function openStoredEntry(id) {

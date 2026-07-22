@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Add in-app calculator documentation with dedicated documentation routes, per-calculator sections, and screenshots.
+- Add calculator-to-documentation and documentation-to-calculator navigation.
+- Improve calculator top actions and documentation navigation with compact icon buttons.
+- Add a scroll-to-top control for long documentation pages, including mobile visibility fixes.
+- Document the development rule that calculator changes must keep documentation text and screenshots in sync.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.3.0
 
 - Simplify dilution around ampoule/vial amount, ampoule/vial volume, and desired amount in 1 mL.
