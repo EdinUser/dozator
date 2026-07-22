@@ -96,6 +96,8 @@ test("screen hash URLs load and survive reload", async ({ page }) => {
     { hash: "reconstitution", heading: "Разтваряне на флакон" },
     { hash: "infusion", heading: "Инфузионна скорост" },
     { hash: "validation", heading: "Как са проверени изчисленията" },
+    { hash: "documentation", heading: "Документация" },
+    { hash: "documentation/dose", heading: "Доза от готов разтвор" },
   ]) {
     await page.goto(`/#${route.hash}`);
     await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
@@ -104,6 +106,33 @@ test("screen hash URLs load and survive reload", async ({ page }) => {
     await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`#${route.hash}$`));
   }
+});
+
+test("calculator documentation links open the matching documentation section", async ({ page }) => {
+  await page.goto("/#infusion");
+  await page.getByRole("link", { name: "Помощ" }).click();
+
+  await expect(page).toHaveURL(/#\/documentation\/infusion$/);
+  await expect(page.locator("#documentation-infusion")).toBeFocused();
+  await expect(page.locator("#documentation-infusion").getByRole("heading", { name: "Инфузионна скорост" })).toBeInViewport();
+  await expect(page.getByText("Какво се изчислява").last()).toBeInViewport();
+  await expect(page.locator("#documentation-infusion .documentation-figure")).not.toBeInViewport();
+  await expect(page.getByRole("heading", { name: "Инфузионна скорост" })).toBeVisible();
+  await expect(page.getByText("Изчислява скорост на помпа в mL/h")).toBeVisible();
+
+  await page.locator("#documentation-infusion").getByRole("link", { name: "Към калкулатора" }).click();
+  await expect(page).toHaveURL(/#infusion$/);
+  await expect(page.getByRole("heading", { name: "Инфузионна скорост" })).toBeVisible();
+});
+
+test("scroll-to-top button returns long documentation pages to the top", async ({ page }) => {
+  await page.goto("/#/documentation");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+  const scrollTop = page.getByRole("button", { name: "Към началото" });
+  await expect(scrollTop).toBeVisible();
+  await scrollTop.click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(20);
 });
 
 test("installed app shell reloads while offline after first load", async ({ page, context }) => {

@@ -40,6 +40,12 @@ test("result and field-error states have no serious automated accessibility viol
   await expectNoSeriousViolations(page);
 });
 
+test("documentation page has no serious automated accessibility violations", async ({ page }) => {
+  await page.goto("/#/documentation");
+  await expect(page.getByRole("heading", { name: "Документация" })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
 test("keyboard can reach skip link and open an infusion submode", async ({ page }) => {
   await page.goto("/");
 

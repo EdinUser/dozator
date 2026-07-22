@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bg } from "../src/i18n/bg.js";
-import { renderCalculatorScreen, renderClinicalValidationScreen, renderResultPanel } from "../src/ui/views.js";
+import { renderCalculatorScreen, renderClinicalValidationScreen, renderDocumentationScreen, renderResultPanel } from "../src/ui/views.js";
 
 describe("calculator views", () => {
   it("renders infusion as two clear suboptions", () => {
@@ -14,6 +14,7 @@ describe("calculator views", () => {
     expect(html).toContain("Обем и време");
     expect(html).toContain("data-mode-panel=\"doseRate\"");
     expect(html).toContain("data-mode-panel=\"volumeTime\"");
+    expect(html).toContain("calculator-top-actions");
   });
 
   it("renders forms with custom validation targets", () => {
@@ -38,6 +39,22 @@ describe("calculator views", () => {
     expect(html).toContain("краен обем = общо количество / желано количество в 1 mL");
     expect(html).toContain("/min се умножава по kg и по 60");
     expect(html).toContain("/h се умножава по kg без x60");
+  });
+
+  it("renders user documentation with calculator sections and screenshots", () => {
+    const html = renderDocumentationScreen("dilution");
+
+    expect(html).toContain("Документация");
+    expect(html).toContain("Какво се изчислява");
+    expect(html).toContain("Как се изчислява");
+    expect(html).toContain("Разреждане до количество в 1 mL");
+    expect(html).toContain("не препоръчва лекарство, доза, разтворител или протокол");
+    expect(html).toContain("documentation-top-actions");
+    expect(html).toContain("Към калкулатора");
+    expect(html).toContain("href=\"#dilution\"");
+    expect(html).toContain("/docs/screenshots/dilution-result.png");
+    expect(html).toContain("id=\"documentation-dilution\"");
+    expect(html).toContain("class=\"documentation-calculator is-active\"");
   });
 
   it("renders focusable live result and alert panels", () => {

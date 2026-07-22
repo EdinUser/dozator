@@ -51,6 +51,7 @@ git checkout -b docs/project-technical-context
 - За формула: започнете от `src/calculators/`, после unit/golden тестове, после UI/E2E ако текстът или workflow се променя.
 - За нова единица: започнете от `src/units/units.js`, после conversion traces и tests.
 - За нов текст: редактирайте `src/i18n/bg.js`; не разпръсквайте текстове из modules.
+- За промяна в калкулатор, резултат, инструкция, формула, rounding или видим workflow: обновете и `src/docs/bg/documentation.js`, а ако примерният екран се променя, пуснете `npm run screenshots:docs`.
 - За ново поле във форма: проверете `src/ui/views.js`, `src/main.js`, `src/share/share-link.js`, summaries, history/templates, label и tests.
 - За restore behavior: проверете QR, history и templates едновременно.
 - За PWA: проверете `public/service-worker.js`, `src/pwa/register-service-worker.js`, manifest, icons и offline E2E.
@@ -97,6 +98,8 @@ git diff --check
 Проверете и документацията:
 
 - formula/safety промяна: `docs/clinical-validation.md`
+- calculator text/formula/workflow промяна: `src/docs/bg/documentation.js`
+- calculator UI/result example промяна: `npm run screenshots:docs` и commit на обновените `public/docs/screenshots/*.png`
 - testing промяна: `docs/testing.md`
 - architecture промяна: `docs/architecture.md`
 - deploy промяна: `docs/deployment.md`

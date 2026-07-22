@@ -16,6 +16,7 @@ import {
   renderHistoryAccordion,
   renderHistoryModal,
   renderClinicalValidationScreen,
+  renderDocumentationScreen,
   renderHomeScreen,
   renderMenuItems,
   renderLabelModal,
@@ -35,6 +36,7 @@ import { registerServiceWorker } from "./pwa/register-service-worker.js";
 const acknowledgementKey = "dozator-safety-acknowledged";
 const themeKey = "dozator-theme";
 const validationRoute = "validation";
+const documentationRoute = "documentation";
 const app = document.querySelector("#app");
 let activeCalculator = null;
 let lastResult = null;
@@ -104,6 +106,7 @@ function renderApp() {
     <main class="container app-main">
       <section id="screen" tabindex="-1"></section>
     </main>
+    <button class="scroll-top-button" type="button" data-action="scroll-top" aria-label="${bg.actions.scrollToTop}" hidden>↑</button>
 
     ${renderLabelModal()}
     ${renderShareModal()}
@@ -134,6 +137,10 @@ function renderApp() {
         </div>
         <div class="menu-placeholder mt-4">
           <div class="menu-section-title">${bg.menu.safetyAndValidation}</div>
+          <button class="menu-item" type="button" data-action="show-documentation">
+            <span>${bg.menu.documentationTitle}</span>
+            <small>${bg.menu.documentationDescription}</small>
+          </button>
           <button class="menu-item" type="button" data-action="show-clinical-validation">
             <span>${bg.menu.validationTitle}</span>
             <small>${bg.menu.validationDescription}</small>
@@ -162,8 +169,10 @@ function wireEvents() {
   app.addEventListener("change", handleChange);
   app.addEventListener("input", handleInput);
   app.addEventListener("focusin", handleFocusIn);
+  window.addEventListener("scroll", updateScrollTopButton);
   window.addEventListener("hashchange", handleHashChange);
   window.addEventListener("popstate", handlePopState);
+  updateScrollTopButton();
 }
 
 function handleClick(event) {
@@ -182,8 +191,19 @@ function handleClick(event) {
     return;
   }
 
+  if (action === "go-back") {
+    hideOpenMenu();
+    navigateBack();
+    return;
+  }
+
   if (action === "toggle-theme") {
     applyTheme(getTheme() === "dark" ? "light" : "dark");
+    return;
+  }
+
+  if (action === "scroll-top") {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
 
@@ -251,6 +271,12 @@ function handleClick(event) {
   if (action === "show-favorites") {
     hideOpenMenu();
     showFavorites();
+    return;
+  }
+
+  if (action === "show-documentation") {
+    hideOpenMenu();
+    navigateToRoute(documentationRoute);
     return;
   }
 
@@ -363,7 +389,7 @@ function renderCalculator(key) {
   activeCalculator = key;
   lastResult = null;
   lastSubmittedValues = null;
-  document.querySelector("#screen").innerHTML = renderCalculatorScreen(calculators[key]);
+  document.querySelector("#screen").innerHTML = renderCalculatorScreen({ ...calculators[key], key });
 }
 
 function renderClinicalValidation() {
@@ -371,6 +397,14 @@ function renderClinicalValidation() {
   lastResult = null;
   lastSubmittedValues = null;
   document.querySelector("#screen").innerHTML = renderClinicalValidationScreen();
+}
+
+function renderDocumentation(section = "") {
+  activeCalculator = null;
+  lastResult = null;
+  lastSubmittedValues = null;
+  document.querySelector("#screen").innerHTML = renderDocumentationScreen(section);
+  focusDocumentationSection(section);
 }
 
 function navigateToRoute(routeKey) {
@@ -394,6 +428,15 @@ function navigateHome() {
 
   window.history.pushState(null, "", currentUrl);
   renderHome();
+}
+
+function navigateBack() {
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+
+  navigateHome();
 }
 
 function renderRouteFromHash() {
@@ -426,6 +469,11 @@ function renderRoute(route) {
     return true;
   }
 
+  if (route.type === "documentation") {
+    renderDocumentation(route.section);
+    return true;
+  }
+
   return false;
 }
 
@@ -448,11 +496,47 @@ function currentHashRoute() {
     return { type: "validation" };
   }
 
+  if (hash === documentationRoute) {
+    return { type: "documentation", section: "" };
+  }
+
+  if (hash.startsWith(`${documentationRoute}/`)) {
+    const section = hash.slice(`${documentationRoute}/`.length);
+    return calculators[section] ? { type: "documentation", section } : null;
+  }
+
   if (calculators[hash]) {
     return { type: "calculator", key: hash };
   }
 
   return null;
+}
+
+function focusDocumentationSection(section) {
+  if (!section) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const target = document.querySelector(`#documentation-${section}`);
+
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ block: "start" });
+    target.focus({ preventScroll: true });
+  });
+}
+
+function updateScrollTopButton() {
+  const button = document.querySelector(".scroll-top-button");
+
+  if (!button) {
+    return;
+  }
+
+  button.hidden = window.scrollY < 320;
 }
 
 function openStoredEntry(id) {
