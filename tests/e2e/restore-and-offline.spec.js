@@ -135,6 +135,14 @@ test("scroll-to-top button returns long documentation pages to the top", async (
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(20);
 });
 
+test("scroll-to-top button is reachable on mobile documentation sections", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#/documentation/reconstitution");
+  await page.getByRole("heading", { name: "Разтваряне на флакон" }).scrollIntoViewIfNeeded();
+
+  await expect(page.getByRole("button", { name: "Към началото" })).toBeVisible();
+});
+
 test("installed app shell reloads while offline after first load", async ({ page, context }) => {
   await page.goto("/");
   await page.evaluate(async () => {
