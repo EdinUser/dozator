@@ -1,4 +1,16 @@
-import { formatConcentrationMgPerMl, formatMassMg, formatNumber, formatVolumeMl, massConversionTrace, parseDecimal, toMg, toMl, volumeConversionTrace } from "../units/units.js";
+import {
+  formatConcentrationMgPerMl,
+  formatMassMg,
+  formatNumber,
+  formatVolumeMl,
+  formatVolumeNumber,
+  formatVolumeRateMlPerHour,
+  massConversionTrace,
+  parseDecimal,
+  toMg,
+  toMl,
+  volumeConversionTrace,
+} from "../units/units.js";
 import { highAlertWarning, validatePositiveFieldEntries } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
 
@@ -38,11 +50,11 @@ export function calculateInfusionDoseRate(input) {
 
   return {
     ok: true,
-    primary: `${formatNumber(pumpRate)} mL/h`,
+    primary: formatVolumeRateMlPerHour(pumpRate),
     instructions: [
       bg.calculations.infusion.concentration(formatConcentrationMgPerMl(concentration)),
-      bg.calculations.infusion.setPump(formatNumber(pumpRate)),
-      ...(volumeRate ? [bg.calculations.infusion.volumeRate(formatNumber(volumeRate.rate), formatNumber(volumeRate.hours))] : []),
+      bg.calculations.infusion.setPump(formatVolumeNumber(pumpRate)),
+      ...(volumeRate ? [bg.calculations.infusion.volumeRate(formatVolumeNumber(volumeRate.rate), formatNumber(volumeRate.hours))] : []),
     ],
     finalLines: [
       bg.calculations.infusion.amount(formatMassMg(medicationMg)),
@@ -55,15 +67,15 @@ export function calculateInfusionDoseRate(input) {
     traces: [
       `${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`,
       ...(rate.trace ? [rate.trace] : []),
-      `${formatNumber(rate.mgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatNumber(pumpRate)} mL/h`,
-      ...(volumeRate ? [`${formatVolumeMl(finalMl)} ÷ ${formatNumber(volumeRate.hours)} h = ${formatNumber(volumeRate.rate)} mL/h`] : []),
+      `${formatNumber(rate.mgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatVolumeRateMlPerHour(pumpRate)}`,
+      ...(volumeRate ? [`${formatVolumeMl(finalMl)} ÷ ${formatNumber(volumeRate.hours)} h = ${formatVolumeRateMlPerHour(volumeRate.rate)}`] : []),
     ],
     warnings: highAlertWarning(input.highAlert),
     label: {
       totalAmount: formatMassMg(medicationMg),
       finalVolume: formatVolumeMl(finalMl),
       concentration: `${formatNumber(concentration)} mg/mL`,
-      recipe: bg.calculations.infusion.doseRateRecipe(formatMassMg(medicationMg), formatVolumeMl(finalMl), formatNumber(pumpRate)),
+      recipe: bg.calculations.infusion.doseRateRecipe(formatMassMg(medicationMg), formatVolumeMl(finalMl), formatVolumeNumber(pumpRate)),
     },
   };
 }
@@ -132,17 +144,17 @@ export function calculateInfusionVolumeTime(input) {
 
   return {
     ok: true,
-    primary: `${formatNumber(rate)} mL/h`,
-    instructions: [bg.calculations.infusion.setPump(formatNumber(rate))],
+    primary: formatVolumeRateMlPerHour(rate),
+    instructions: [bg.calculations.infusion.setPump(formatVolumeNumber(rate))],
     finalLines: [bg.calculations.infusion.volume(formatVolumeMl(volumeMl)), bg.calculations.infusion.time(formatNumber(hours))],
     notices,
-    traces: [`${formatVolumeMl(volumeMl)} ÷ ${formatNumber(hours)} h = ${formatNumber(rate)} mL/h`],
+    traces: [`${formatVolumeMl(volumeMl)} ÷ ${formatNumber(hours)} h = ${formatVolumeRateMlPerHour(rate)}`],
     warnings: [],
     label: {
       totalAmount: "",
       finalVolume: formatVolumeMl(volumeMl),
       concentration: "",
-      recipe: bg.calculations.infusion.volumeTimeRecipe(formatVolumeMl(volumeMl), formatNumber(hours), formatNumber(rate)),
+      recipe: bg.calculations.infusion.volumeTimeRecipe(formatVolumeMl(volumeMl), formatNumber(hours), formatVolumeNumber(rate)),
     },
   };
 }
