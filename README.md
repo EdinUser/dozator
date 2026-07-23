@@ -18,9 +18,9 @@
 ## Функции
 
 - Доза от готов разтвор
-- Разреждане до концентрация
+- Разреждане до желано количество в `1 mL` от количество лекарство или от концентрация
 - Разтваряне на флакон
-- Инфузионна скорост
+- Инфузионен калкулатор с режими за количество за 24 часа, доза за час и обем/време
 - Проверка на изчислението
 - Видимо преобразуване на единици при смесване на `mg`, `µg`, `L`, `mL`, `min`, `h`
 - Предупреждения за невъзможни или съмнителни стойности
@@ -33,7 +33,9 @@
 - История на последните 10 успешни изчисления за всеки тип калкулатор
 - Шаблони с име по желание, групирани по тип калкулатор
 - Бутон `История` във всеки калкулатор за бърз достъп до историята само за този тип
+- Запазване на попълнените стойности при отваряне на документацията за текущия калкулатор
 - Кратка страница `Как са проверени изчисленията`
+- Потребителска документация с примерни screenshots за отделните режими на калкулаторите с табове
 - Installable PWA с offline работа след първоначално зареждане
 - Видима версия на приложението и `CHANGELOG.md`
 
@@ -42,7 +44,6 @@
 - Калкулаторът не е drug reference и не е prescribing assistant.
 - Няма backend и няма сървърно съхранение на потребителски данни.
 - QR/share payload не трябва да съдържа patient identifiers или свободни медицински бележки.
-- Production deployment стойности не се документират публично в repo.
 
 ## Локална разработка
 
@@ -63,23 +64,10 @@ npm run test:all
 
 Подробно: [docs/testing.md](docs/testing.md).
 
-## CI/CD
-
-Приложението се build-ва до статична директория `dist/`.
-
-- pull request към `main`: инсталира dependencies, пуска unit/regression тестове, build и E2E тестове;
-- push към `main`: пуска същите проверки и след това production deploy през GitHub Actions.
-
-Конкретните production target стойности се пазят в GitHub repository secrets и не се документират публично в README.
-
-Подробно: [docs/deployment.md](docs/deployment.md).
-
-## Технически документи
+## Документация
 
 - [docs/project-context.md](docs/project-context.md)
 - [docs/architecture.md](docs/architecture.md)
-- [docs/development.md](docs/development.md)
 - [docs/testing.md](docs/testing.md)
 - [docs/privacy-security.md](docs/privacy-security.md)
 - [docs/clinical-validation.md](docs/clinical-validation.md)
-- [docs/deployment.md](docs/deployment.md)

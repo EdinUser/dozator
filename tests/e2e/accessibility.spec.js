@@ -13,9 +13,9 @@ test("home and calculator forms have no serious automated accessibility violatio
 
   for (const calculatorName of [
     /Доза от готов разтвор/,
-    /Разреждане до количество в 1 mL/,
+    /Разреждане до желано количество в 1 мл/,
     /Разтваряне на флакон/,
-    /Инфузионна скорост/,
+    /Инфузионен калкулатор/,
   ]) {
     await page.getByRole("button", { name: calculatorName }).click();
     await expectNoSeriousViolations(page);
@@ -54,7 +54,7 @@ test("keyboard can reach skip link and open an infusion submode", async ({ page 
   await page.keyboard.press("Enter");
   await expect(page.locator("#screen")).toBeFocused();
 
-  await page.getByRole("button", { name: /Инфузионна скорост/ }).click();
+  await page.getByRole("button", { name: /Инфузионен калкулатор/ }).click();
   await page.locator("#mode-dose").focus();
   await expect(page.locator("#mode-dose")).toBeFocused();
   await page.keyboard.press("ArrowRight");

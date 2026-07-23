@@ -32,6 +32,7 @@ npx playwright install chromium
 - Преобразуванията `mg` към `µg`, `µg` към `mg`, `mL` към `L` и `L` към `mL` трябва да имат unit тестове.
 - Нулеви, отрицателни, липсващи и невъзможни стойности трябва да връщат грешка към конкретното поле.
 - Restore от QR, история и шаблон трябва да преизчислява локално и да показва предупреждение за повторна проверка.
+- Калкулатори с табове трябва да имат тестове, че `mode` се пази и възстановява правилно от QR/history/templates.
 - E2E тестовете трябва да проверяват както числения резултат, така и видимия текст на инструкцията.
 - Документационните screenshots се генерират отделно с `npm run screenshots:docs`; това не е assertion suite.
 - При промяна на калкулатор, формула, инструкция, rounding или примерен UI, проверете дали `src/docs/bg/documentation.js` и `public/docs/screenshots/*.png` трябва да се обновят.
@@ -57,6 +58,7 @@ npx playwright install chromium
 - Текст на инструкция или label: golden test плюс E2E assertion, ако текстът е user-visible в основен workflow.
 - User-facing calculator промяна: обновете документационния текст и screenshots, когато примерът или описанието вече не съответства.
 - Ново form поле: unit/golden, share allowlist test, restore E2E и history/template check.
+- Нов calculator tab/mode: unit/golden за формулата, view assertion за tab-а, share allowlist test за `mode`, и E2E restore от history/templates.
 - Safety warning: unit/regression test и поне един UI/E2E assertion, ако warning-ът е видим.
 - PWA/service worker промяна: unit test за helper behavior и offline E2E.
 - Accessibility промяна: E2E/axe test или explicit keyboard assertion.

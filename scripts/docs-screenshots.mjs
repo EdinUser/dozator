@@ -19,13 +19,24 @@ const examples = [
     },
   },
   {
-    name: "dilution-result",
+    name: "dilution-amount-result",
     route: "dilution",
     run: async (page) => {
       await page.locator("#availableAmount").fill("2");
       await page.locator("select[name='availableAmountUnit']").selectOption("g");
       await page.locator("#availableVolume").fill("1");
       await page.locator("#targetConcentration").fill("3");
+      await page.locator("select[name='targetConcentrationUnit']").selectOption("%");
+    },
+  },
+  {
+    name: "dilution-concentration-result",
+    route: "dilution",
+    run: async (page) => {
+      await page.locator("label[for='mode-dilution-concentration']").click();
+      await page.locator("#sourceConcentration").fill("10");
+      await page.locator("#sourceVolume").fill("5");
+      await page.locator("#targetConcentration").fill("2");
       await page.locator("select[name='targetConcentrationUnit']").selectOption("%");
     },
   },
@@ -39,13 +50,32 @@ const examples = [
     },
   },
   {
-    name: "infusion-result",
+    name: "infusion-medication-amount-result",
     route: "infusion",
     run: async (page) => {
-      await page.locator("#medicationAmount").fill("500");
-      await page.locator("#finalVolume").fill("250");
-      await page.locator("#prescribedRate").fill("25");
-      await page.locator("#hoursToRun").fill("5");
+      await page.locator("#amountPatientWeight").fill("1");
+      await page.locator("#amountPrescribedRate").fill("5");
+    },
+  },
+  {
+    name: "infusion-dose-rate-result",
+    route: "infusion",
+    run: async (page) => {
+      await page.locator("label[for='mode-dose']").click();
+      await page.locator("#medicationAmount").fill("250");
+      await page.locator("#finalVolume").fill("50");
+      await page.locator("#patientWeight").fill("70");
+      await page.locator("#prescribedRate").fill("5");
+      await page.locator("select[name='prescribedRateUnit']").selectOption("µg/kg/min");
+    },
+  },
+  {
+    name: "infusion-volume-time-result",
+    route: "infusion",
+    run: async (page) => {
+      await page.locator("label[for='mode-time']").click();
+      await page.locator("#volume").fill("500");
+      await page.locator("#time").fill("4");
     },
   },
 ];

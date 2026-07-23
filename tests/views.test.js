@@ -3,18 +3,33 @@ import { bg } from "../src/i18n/bg.js";
 import { renderCalculatorScreen, renderClinicalValidationScreen, renderDocumentationScreen, renderResultPanel } from "../src/ui/views.js";
 
 describe("calculator views", () => {
-  it("renders infusion as two clear suboptions", () => {
+  it("renders infusion as three clear suboptions", () => {
     const html = renderCalculatorScreen({
       title: bg.calculators.infusion.title,
       subtitle: bg.calculators.infusion.subtitle,
       render: "infusion",
     });
 
+    expect(html).toContain("Доза за лекарствено вещество за 24 часа");
     expect(html).toContain("Доза за час");
     expect(html).toContain("Обем и време");
+    expect(html).toContain("data-mode-panel=\"medicationAmount\"");
     expect(html).toContain("data-mode-panel=\"doseRate\"");
     expect(html).toContain("data-mode-panel=\"volumeTime\"");
     expect(html).toContain("calculator-top-actions");
+  });
+
+  it("renders dilution as two clear suboptions", () => {
+    const html = renderCalculatorScreen({
+      title: bg.calculators.dilution.title,
+      subtitle: bg.calculators.dilution.subtitle,
+      render: "dilution",
+    });
+
+    expect(html).toContain("От количество лекарство");
+    expect(html).toContain("От концентрация");
+    expect(html).toContain("data-mode-panel=\"amount\"");
+    expect(html).toContain("data-mode-panel=\"concentration\"");
   });
 
   it("renders forms with custom validation targets", () => {
@@ -35,7 +50,7 @@ describe("calculator views", () => {
     const html = renderClinicalValidationScreen();
 
     expect(html).toContain("1% се приема като 10 mg/mL");
-    expect(html).toContain("Разреждане до количество в 1 mL");
+    expect(html).toContain("Разреждане до желано количество в 1 mL");
     expect(html).toContain("краен обем = общо количество / желано количество в 1 mL");
     expect(html).toContain("/min се умножава по kg и по 60");
     expect(html).toContain("/h се умножава по kg без x60");
@@ -45,14 +60,18 @@ describe("calculator views", () => {
     const html = renderDocumentationScreen("dilution");
 
     expect(html).toContain("Документация");
-    expect(html).toContain("Какво се изчислява");
+    expect(html).toContain("Кога се използва");
+    expect(html).toContain("Полетата");
     expect(html).toContain("Как се изчислява");
-    expect(html).toContain("Разреждане до количество в 1 mL");
+    expect(html).toContain("Разреждане до желано количество в 1 мл");
     expect(html).toContain("не препоръчва лекарство, доза, разтворител или протокол");
     expect(html).toContain("documentation-top-actions");
     expect(html).toContain("Към калкулатора");
     expect(html).toContain("href=\"#dilution\"");
-    expect(html).toContain("/docs/screenshots/dilution-result.png");
+    expect(html).toContain("/docs/screenshots/dilution-amount-result.png");
+    expect(html).toContain("/docs/screenshots/dilution-concentration-result.png");
+    expect(html).toContain("id=\"documentation-dilution-amount\"");
+    expect(html).toContain("id=\"documentation-dilution-concentration\"");
     expect(html).toContain("id=\"documentation-dilution\"");
     expect(html).toContain("class=\"documentation-calculator is-active\"");
   });

@@ -111,11 +111,36 @@ body {
   padding: 0.75rem;
 }
 
-.app-version {
-  display: block;
+.safety-toggle {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.safety-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.safety-strip-details {
+  margin-top: 0.45rem;
+}
+
+.app-footer {
+  color: var(--app-muted);
   font-size: 0.82rem;
+  padding-block: 0 1.25rem;
+  text-align: center;
+}
+
+.app-version {
   font-weight: 700;
-  margin-top: 0.4rem;
 }
 
 .btn-outline-primary {
@@ -395,6 +420,12 @@ legend {
   font-weight: 700;
 }
 
+.form-control::placeholder {
+  color: var(--app-muted);
+  font-size: 0.95rem;
+  opacity: 0.82;
+}
+
 .unit-select {
   flex: 0 0 6.25rem;
 }
@@ -652,6 +683,35 @@ legend {
   color: #12161d !important;
 }
 
+.result-actions .continue-action-button {
+  background-color: #e8f4f7 !important;
+  border-color: #7dbdd0 !important;
+  color: var(--app-primary-dark) !important;
+  font-weight: 800;
+}
+
+.result-actions .continue-action-button:hover,
+.result-actions .continue-action-button:focus,
+.result-actions .continue-action-button:active {
+  background-color: #d7edf3 !important;
+  border-color: var(--app-primary) !important;
+  color: var(--app-primary-dark) !important;
+}
+
+[data-bs-theme="dark"] .result-actions .continue-action-button {
+  background-color: #203845 !important;
+  border-color: #68b4ca !important;
+  color: #d9f4fb !important;
+}
+
+[data-bs-theme="dark"] .result-actions .continue-action-button:hover,
+[data-bs-theme="dark"] .result-actions .continue-action-button:focus,
+[data-bs-theme="dark"] .result-actions .continue-action-button:active {
+  background-color: #294958 !important;
+  border-color: #9bd8ea !important;
+  color: #fff !important;
+}
+
 .stored-group + .stored-group {
   margin-top: 1.25rem;
 }
@@ -891,6 +951,24 @@ legend {
   text-transform: uppercase;
 }
 
+.documentation-modes {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.documentation-mode {
+  border-top: 1px solid var(--app-border);
+  padding-top: 1.25rem;
+}
+
+.documentation-mode > .documentation-mode-body > h3 {
+  color: var(--app-ink);
+  font-size: 1.1rem;
+  margin-top: 0;
+  text-transform: none;
+}
+
 .documentation-overview ul,
 .documentation-calculator ul {
   margin-bottom: 0;
@@ -900,6 +978,32 @@ legend {
 .documentation-overview li + li,
 .documentation-calculator li + li {
   margin-top: 0.35rem;
+}
+
+.documentation-fields {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 0;
+  padding-left: 1.45rem;
+}
+
+.documentation-fields li::marker {
+  color: var(--app-primary-dark);
+  font-weight: 800;
+}
+
+.documentation-fields strong,
+.documentation-fields span {
+  display: block;
+}
+
+.documentation-fields strong {
+  color: var(--app-ink);
+}
+
+.documentation-fields span {
+  color: var(--app-muted);
+  margin-top: 0.15rem;
 }
 
 .documentation-formulas {
@@ -969,6 +1073,10 @@ legend {
 }
 
 @media (max-width: 420px) {
+  .form-control::placeholder {
+    font-size: 0.82rem;
+  }
+
   .scroll-top-button {
     height: 44px;
     width: 44px;

@@ -150,36 +150,93 @@ function renderDocumentationCalculator(calculator, isActive) {
             <span>${bg.actions.openCalculator}</span>
           </a>
         </div>
-        <section>
-          <h3>Какво се изчислява</h3>
-          <p>${calculator.what}</p>
-        </section>
-        <section>
-          <h3>Какво въвеждате</h3>
-          ${renderBulletList(calculator.inputs)}
-        </section>
-        <section>
-          <h3>Какво получавате</h3>
-          <p>${calculator.result}</p>
-        </section>
-        <section>
-          <h3>Как се изчислява</h3>
-          ${renderFormulaList(calculator.formula)}
-        </section>
-        <section>
-          <h3>Пример</h3>
-          <p>${calculator.example}</p>
-        </section>
-        <section>
-          <h3>Ограничения</h3>
-          ${renderBulletList(calculator.limits)}
-        </section>
+        ${renderDocumentationSections(calculator)}
+        ${calculator.modes ? `<div class="documentation-modes">${calculator.modes.map((mode) => renderDocumentationMode(calculator.id, mode)).join("")}</div>` : ""}
       </div>
-      <figure class="documentation-figure">
-        <figcaption>Примерен екран</figcaption>
-        <img src="${calculator.screenshot}" width="${calculator.screenshotWidth}" height="${calculator.screenshotHeight}" alt="${calculator.screenshotAlt}" loading="lazy">
-      </figure>
+      ${calculator.screenshot ? renderDocumentationFigure(calculator) : ""}
     </article>
+  `;
+}
+
+function renderDocumentationMode(calculatorId, mode) {
+  return `
+    <article class="documentation-mode" id="documentation-${calculatorId}-${mode.id}">
+      <div class="documentation-mode-body">
+        <h3>${mode.title}</h3>
+        ${renderDocumentationSections(mode)}
+      </div>
+      ${renderDocumentationFigure(mode)}
+    </article>
+  `;
+}
+
+function renderDocumentationSections(item) {
+  return `
+    ${
+      item.what
+        ? `<section>
+            <h3>Кога се използва</h3>
+            <p>${item.what}</p>
+          </section>`
+        : ""
+    }
+    ${
+      item.fields
+        ? `<section>
+            <h3>Полетата</h3>
+            ${renderFieldList(item.fields)}
+          </section>`
+        : ""
+    }
+    ${
+      item.result
+        ? `<section>
+            <h3>Какво получавате</h3>
+            <p>${item.result}</p>
+          </section>`
+        : ""
+    }
+    ${
+      item.formula
+        ? `<section>
+            <h3>Как се изчислява</h3>
+            ${renderFormulaList(item.formula)}
+          </section>`
+        : ""
+    }
+    ${
+      item.example
+        ? `<section>
+            <h3>Примерна сметка</h3>
+            ${renderExample(item.example)}
+          </section>`
+        : ""
+    }
+    ${
+      item.limits
+        ? `<section>
+            <h3>Какво не проверява</h3>
+            ${renderBulletList(item.limits)}
+          </section>`
+        : ""
+    }
+  `;
+}
+
+function renderDocumentationFigure(item) {
+  return `
+    <figure class="documentation-figure">
+      <figcaption>Примерен екран</figcaption>
+      <img src="${item.screenshot}" width="${item.screenshotWidth}" height="${item.screenshotHeight}" alt="${item.screenshotAlt}" loading="lazy">
+    </figure>
+  `;
+}
+
+function renderFieldList(fields) {
+  return `
+    <ol class="documentation-fields">
+      ${fields.map((field) => `<li><strong>${field.label}</strong><span>${field.description}</span></li>`).join("")}
+    </ol>
   `;
 }
 
@@ -189,6 +246,14 @@ function renderBulletList(lines) {
 
 function renderFormulaList(lines) {
   return `<div class="documentation-formulas">${lines.map((line) => `<code>${line}</code>`).join("")}</div>`;
+}
+
+function renderExample(example) {
+  if (Array.isArray(example)) {
+    return renderFormulaList(example);
+  }
+
+  return `<p>${example}</p>`;
 }
 
 export function renderResultPanel(result) {
@@ -218,6 +283,7 @@ export function renderResultPanel(result) {
       </div>
       <div class="result-actions">
         <button type="button" class="btn btn-outline-secondary btn-lg" data-action="start-over">${bg.actions.newCalculation}</button>
+        ${result.carryForward?.targetMode === "doseRate" ? `<button type="button" class="btn btn-lg continue-action-button" data-action="continue-infusion-dose-rate">${bg.actions.continueToDoseRate}</button>` : ""}
         <button type="button" class="btn btn-outline-primary btn-lg" data-action="share-calculation">${bg.actions.shareQr}</button>
         <button type="button" class="btn btn-outline-primary btn-lg" data-action="save-favorite">${bg.actions.save}</button>
         <button type="button" class="btn btn-primary btn-lg" data-action="create-label">${bg.actions.createLabel}</button>
@@ -493,7 +559,11 @@ export function labelText(result, diluent) {
 
 export function updateModePanels(activeMode) {
   document.querySelectorAll("[data-mode-panel]").forEach((panel) => {
-    panel.hidden = panel.dataset.modePanel !== activeMode;
+    const isActive = panel.dataset.modePanel === activeMode;
+    panel.hidden = !isActive;
+    panel.querySelectorAll("input, select, textarea, button").forEach((control) => {
+      control.disabled = !isActive;
+    });
   });
 }
 
@@ -526,10 +596,34 @@ function renderDilutionForm() {
   return `
     <form class="calculator-form" data-form novalidate>
       <fieldset>
-        <legend>${bg.forms.dilution.container}</legend>
-        ${numberWithUnit("availableAmount", bg.forms.dilution.containerAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
-        ${numberWithUnit("availableVolume", bg.forms.dilution.containerVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL")}
+        <legend>${bg.forms.dilution.mode}</legend>
+        <div class="calculator-mode-options" role="radiogroup" aria-label="${bg.forms.dilution.modeAriaLabel}">
+          <input class="btn-check" type="radio" name="mode" id="mode-dilution-amount" value="amount" checked>
+          <label class="calculator-mode-option" for="mode-dilution-amount">
+            <strong>${bg.forms.dilution.amountMode}</strong>
+            <small>${bg.forms.dilution.amountDescription}</small>
+          </label>
+          <input class="btn-check" type="radio" name="mode" id="mode-dilution-concentration" value="concentration">
+          <label class="calculator-mode-option" for="mode-dilution-concentration">
+            <strong>${bg.forms.dilution.concentrationMode}</strong>
+            <small>${bg.forms.dilution.concentrationDescription}</small>
+          </label>
+        </div>
       </fieldset>
+      <div data-mode-panel="amount">
+        <fieldset>
+          <legend>${bg.forms.dilution.container}</legend>
+          ${numberWithUnit("availableAmount", bg.forms.dilution.containerAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
+          ${numberWithUnit("availableVolume", bg.forms.dilution.containerVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL", false)}
+        </fieldset>
+      </div>
+      <div data-mode-panel="concentration" hidden>
+        <fieldset>
+          <legend>${bg.forms.dilution.sourceSolution}</legend>
+          ${concentrationField("sourceConcentration", bg.forms.dilution.sourceConcentration, bg.forms.common.amountPerMlPlaceholder, "%")}
+          ${numberWithUnit("sourceVolume", bg.forms.dilution.sourceVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL")}
+        </fieldset>
+      </div>
       <fieldset>
         <legend>${bg.forms.dilution.target}</legend>
         ${concentrationField("targetConcentration", bg.forms.dilution.targetAmountPerMl, bg.forms.common.amountPerMlPlaceholder, "mg/mL")}
@@ -571,7 +665,12 @@ function renderInfusionForm() {
       <fieldset>
         <legend>${bg.forms.infusion.mode}</legend>
         <div class="calculator-mode-options" role="radiogroup" aria-label="${bg.forms.infusion.modeAriaLabel}">
-          <input class="btn-check" type="radio" name="mode" id="mode-dose" value="doseRate" checked>
+          <input class="btn-check" type="radio" name="mode" id="mode-amount" value="medicationAmount" checked>
+          <label class="calculator-mode-option" for="mode-amount">
+            <strong>${bg.forms.infusion.medicationAmountMode}</strong>
+            <small>${bg.forms.infusion.medicationAmountDescription}</small>
+          </label>
+          <input class="btn-check" type="radio" name="mode" id="mode-dose" value="doseRate">
           <label class="calculator-mode-option" for="mode-dose">
             <strong>${bg.forms.infusion.doseRateMode}</strong>
             <small>${bg.forms.infusion.doseRateDescription}</small>
@@ -583,7 +682,14 @@ function renderInfusionForm() {
           </label>
         </div>
       </fieldset>
-      <div data-mode-panel="doseRate">
+      <div data-mode-panel="medicationAmount">
+        <fieldset>
+          <legend>${bg.forms.infusion.medicationAmountPreparation}</legend>
+          ${numberWithUnit("amountPatientWeight", bg.forms.infusion.patientWeight, bg.forms.common.weightPlaceholder, ["kg"], "kg")}
+          ${numberWithUnit("amountPrescribedRate", bg.forms.infusion.doseByWeight, bg.forms.common.ratePlaceholder, ["µg/kg/min", "mg/kg/min"], "µg/kg/min")}
+        </fieldset>
+      </div>
+      <div data-mode-panel="doseRate" hidden>
         <fieldset>
           <legend>${bg.forms.infusion.infusion}</legend>
           ${numberWithUnit("medicationAmount", bg.forms.infusion.medicationAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
@@ -592,7 +698,6 @@ function renderInfusionForm() {
           ${numberWithUnit("prescribedRate", bg.forms.infusion.prescribedRate, bg.forms.common.ratePlaceholder, ["mg/h", "µg/h", "mg/kg/h", "µg/kg/h", "mg/kg/min", "µg/kg/min"], "mg/h")}
           ${numberWithUnit("hoursToRun", bg.forms.infusion.hoursToRun, bg.forms.common.hoursPlaceholder, ["h"], "h", false)}
         </fieldset>
-        ${highAlertToggle()}
       </div>
       <div data-mode-panel="volumeTime" hidden>
         <fieldset>
@@ -601,6 +706,7 @@ function renderInfusionForm() {
           ${numberWithUnit("time", bg.forms.infusion.time, bg.forms.common.timePlaceholder, ["h", "min"], "h")}
         </fieldset>
       </div>
+      ${highAlertToggle()}
       ${submitButton()}
     </form>
   `;

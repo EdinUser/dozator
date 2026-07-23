@@ -5,7 +5,7 @@ import "./styles.css";
 import { calculateDose } from "./calculators/dose.js";
 import { calculateDilution } from "./calculators/dilution.js";
 import { calculateReconstitution } from "./calculators/reconstitution.js";
-import { calculateInfusionDoseRate, calculateInfusionVolumeTime } from "./calculators/infusion.js";
+import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "./calculators/infusion.js";
 import {
   labelText,
   renderAcknowledgement,
@@ -30,6 +30,7 @@ import { buildShareUrl, readSharedCalculation } from "./share/share-link.js";
 import { clearHistory, deleteFavorite, makeCalculationEntry, readFavorites, readHistory, saveFavorite, saveHistoryEntry } from "./storage/calculation-store.js";
 import { calculationSummary } from "./storage/summaries.js";
 import { bg } from "./i18n/bg.js";
+import { formatNumber } from "./units/units.js";
 import { appVersion } from "./app-version.js";
 import { registerServiceWorker } from "./pwa/register-service-worker.js";
 
@@ -47,6 +48,8 @@ let historyModal = null;
 let favoritesModal = null;
 let favoriteNameModal = null;
 let currentHistoryCalculator = null;
+let skipNextDraftStore = false;
+const calculatorDrafts = {};
 
 const calculators = {
   dose: {
@@ -97,8 +100,19 @@ function renderApp() {
           </div>
         </div>
         <div class="safety-strip mt-3" role="note">
-          ${bg.app.safetyStrip}
-          <span class="app-version">${bg.app.version(appVersion)}. ${bg.app.offlineReady}</span>
+          <button
+            class="safety-toggle"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#safetyStripDetails"
+            aria-expanded="false"
+            aria-controls="safetyStripDetails"
+          >
+            ${bg.app.warningTitle}
+          </button>
+          <div class="collapse safety-strip-details" id="safetyStripDetails">
+            ${bg.app.safetyStrip}
+          </div>
         </div>
       </div>
     </header>
@@ -106,6 +120,11 @@ function renderApp() {
     <main class="container app-main">
       <section id="screen" tabindex="-1"></section>
     </main>
+    <footer class="app-footer">
+      <div class="container">
+        <span class="app-version">${bg.app.version(appVersion)}. ${bg.app.offlineReady}</span>
+      </div>
+    </footer>
     <button class="scroll-top-button" type="button" data-action="scroll-top" aria-label="${bg.actions.scrollToTop}" hidden>↑</button>
 
     ${renderLabelModal()}
@@ -185,9 +204,14 @@ function handleClick(event) {
     return;
   }
 
-  if (action === "home" || action === "start-over") {
+  if (action === "home") {
     hideOpenMenu();
     navigateHome();
+    return;
+  }
+
+  if (action === "start-over") {
+    startNewCalculation();
     return;
   }
 
@@ -242,6 +266,11 @@ function handleClick(event) {
 
   if (action === "copy-share-link") {
     copyShareLink();
+    return;
+  }
+
+  if (action === "continue-infusion-dose-rate" && lastResult?.carryForward?.targetMode === "doseRate") {
+    continueInfusionDoseRate();
     return;
   }
 
@@ -390,6 +419,8 @@ function renderCalculator(key) {
   lastResult = null;
   lastSubmittedValues = null;
   document.querySelector("#screen").innerHTML = renderCalculatorScreen({ ...calculators[key], key });
+  restoreCalculatorDraft(key);
+  syncActiveModePanel();
 }
 
 function renderClinicalValidation() {
@@ -450,6 +481,8 @@ function renderRouteFromHash() {
 }
 
 function renderRoute(route) {
+  storeCurrentCalculatorDraft();
+
   if (route.type === "home") {
     renderHome();
     return true;
@@ -579,12 +612,12 @@ function calculatorTitles() {
 
 function loadCalculation(calculator, values, options = {}) {
   activeCalculator = calculator;
-  lastSubmittedValues = values;
   renderCalculator(calculator);
   restoreFormValues(values);
 
   const result = calculators[calculator].calculate(values);
   lastResult = result.ok ? result : null;
+  lastSubmittedValues = result.ok ? values : null;
   document.querySelector("#result").innerHTML = `${options.restored ? renderRestoreWarning() : ""}${renderResultPanel(result)}`;
 
   const form = document.querySelector("[data-form]");
@@ -609,11 +642,20 @@ function loadSharedCalculation() {
 }
 
 function restoreFormValues(values) {
+  if (values.mode) {
+    const modeField = document.querySelector(`[name="mode"][value="${values.mode}"]`);
+
+    if (modeField) {
+      modeField.checked = true;
+      updateModePanels(values.mode);
+    }
+  }
+
   Object.entries(values).forEach(([name, value]) => {
     const field =
       name === "mode"
         ? document.querySelector(`[name="${name}"][value="${value}"]`)
-        : document.querySelector(`[name="${name}"]`);
+        : document.querySelector(`[name="${name}"]:not(:disabled)`) || document.querySelector(`[name="${name}"]`);
 
     if (!field) {
       return;
@@ -636,6 +678,94 @@ function restoreFormValues(values) {
   if (mode) {
     updateModePanels(mode);
   }
+}
+
+function syncActiveModePanel() {
+  const mode = document.querySelector("[data-form] [name='mode']:checked")?.value;
+
+  if (mode) {
+    updateModePanels(mode);
+  }
+}
+
+function storeCurrentCalculatorDraft() {
+  if (skipNextDraftStore) {
+    skipNextDraftStore = false;
+    return;
+  }
+
+  const form = document.querySelector("[data-form]");
+
+  if (!activeCalculator || !form) {
+    return;
+  }
+
+  calculatorDrafts[activeCalculator] = formValues(form);
+}
+
+function restoreCalculatorDraft(key) {
+  const draft = calculatorDrafts[key];
+
+  if (!draft) {
+    return;
+  }
+
+  restoreFormValues(draft);
+}
+
+function formValues(form) {
+  const values = Object.fromEntries(new FormData(form).entries());
+  values.highAlert = form.querySelector("[name='highAlert']")?.checked ?? false;
+
+  return values;
+}
+
+function startNewCalculation() {
+  if (!activeCalculator) {
+    navigateHome();
+    return;
+  }
+
+  const calculator = activeCalculator;
+  delete calculatorDrafts[calculator];
+  lastResult = null;
+  lastSubmittedValues = null;
+
+  const route = currentHashRoute();
+
+  if (route?.type === "calculator" && route.key === calculator) {
+    renderCalculator(calculator);
+    document.querySelector("#screen")?.focus({ preventScroll: true });
+    return;
+  }
+
+  skipNextDraftStore = true;
+  navigateToRoute(calculator);
+}
+
+function continueInfusionDoseRate() {
+  const carryForward = lastResult?.carryForward;
+
+  if (!carryForward || activeCalculator !== "infusion") {
+    return;
+  }
+
+  lastResult = null;
+  lastSubmittedValues = null;
+  document.querySelector("[data-input-summary]")?.remove();
+  document.querySelector("#result").innerHTML = "";
+
+  restoreFormValues({
+    mode: "doseRate",
+    medicationAmount: formatNumber(carryForward.medicationAmountMg),
+    medicationAmountUnit: "mg",
+    patientWeight: formatNumber(carryForward.patientWeightKg),
+    patientWeightUnit: "kg",
+  });
+
+  const form = document.querySelector("[data-form]");
+  form?.classList.remove("is-collapsed");
+  document.querySelector("#medicationAmount")?.focus();
 }
 
 function clearFieldErrors(form) {
@@ -757,7 +887,15 @@ function hideOpenMenu() {
 }
 
 function calculateInfusion(input) {
-  return input.mode === "volumeTime" ? calculateInfusionVolumeTime(input) : calculateInfusionDoseRate(input);
+  if (input.mode === "volumeTime") {
+    return calculateInfusionVolumeTime(input);
+  }
+
+  if (input.mode === "medicationAmount") {
+    return calculateInfusionMedicationAmount(input);
+  }
+
+  return calculateInfusionDoseRate(input);
 }
 
 function populateLabel(result) {

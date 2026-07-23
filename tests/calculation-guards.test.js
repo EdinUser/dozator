@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateDilution } from "../src/calculators/dilution.js";
 import { calculateDose } from "../src/calculators/dose.js";
-import { calculateInfusionDoseRate, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
+import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
 import { calculateReconstitution } from "../src/calculators/reconstitution.js";
 
 describe("dose calculation guards", () => {
@@ -90,6 +90,22 @@ describe("dilution calculation guards", () => {
     expect(result.traces).toContain("10 mg ÷ 500 µg/mL = 20 mL");
   });
 
+  it("does not require initial volume for amount-only dilution", () => {
+    const result = calculateDilution({
+      availableAmount: "500",
+      availableAmountUnit: "mg",
+      availableVolume: "",
+      availableVolumeUnit: "mL",
+      targetConcentration: "50",
+      targetConcentrationUnit: "mg/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.notices).toEqual([]);
+  });
+
   it("allows no-diluent case when target equals available amount in 1 mL", () => {
     const result = calculateDilution({
       availableAmount: "20",
@@ -118,6 +134,48 @@ describe("dilution calculation guards", () => {
       availableVolumeUnit: "mL",
       targetConcentration: "1",
       targetConcentrationUnit: "mg/mL",
+      highAlert: false,
+    };
+
+    const result = calculateDilution({ ...input, [field]: value });
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors[0]).toMatchObject({ name: field });
+  });
+
+  it("rejects target concentration above source concentration in concentration mode", () => {
+    const result = calculateDilution({
+      mode: "concentration",
+      sourceConcentration: "2",
+      sourceConcentrationUnit: "%",
+      sourceVolume: "5",
+      sourceVolumeUnit: "mL",
+      targetConcentration: "10",
+      targetConcentrationUnit: "%",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors).toMatchObject([
+      {
+        name: "targetConcentration",
+        message: "Желаното количество в 1 mL е по-високо от наличното. Това не може да се получи чрез разреждане.",
+      },
+    ]);
+  });
+
+  it.each([
+    ["sourceConcentration", "0"],
+    ["sourceVolume", "0"],
+    ["targetConcentration", "0"],
+  ])("rejects invalid concentration-mode field %s", (field, value) => {
+    const input = {
+      mode: "concentration",
+      sourceConcentration: "10",
+      sourceConcentrationUnit: "%",
+      sourceVolume: "5",
+      sourceVolumeUnit: "mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "%",
       highAlert: false,
     };
 
@@ -241,6 +299,23 @@ describe("reconstitution calculation guards", () => {
 });
 
 describe("infusion calculation guards", () => {
+  it.each([
+    ["amountPatientWeight", "0"],
+    ["amountPrescribedRate", "0"],
+  ])("rejects invalid medication-amount field %s", (field, value) => {
+    const input = {
+      amountPatientWeight: "1",
+      amountPatientWeightUnit: "kg",
+      amountPrescribedRate: "5",
+      amountPrescribedRateUnit: "µg/kg/min",
+      highAlert: false,
+    };
+
+    const result = calculateInfusionMedicationAmount({ ...input, [field]: value });
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors[0]).toMatchObject({ name: field });
+  });
+
   it("converts microgram per hour dose rate to mg per hour", () => {
     const result = calculateInfusionDoseRate({
       medicationAmount: "1",

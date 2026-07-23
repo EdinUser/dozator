@@ -22,9 +22,48 @@ test("dose calculator shows result, instructions, and verification", async ({ pa
   await expect(page.getByText("Въведени данни")).toBeVisible();
 });
 
+test("calculator documentation round-trip keeps form values", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Доза от готов разтвор/ }).click();
+
+  await page.locator("#requiredDose").fill("125");
+  await page.locator("select[name='requiredDoseUnit']").selectOption("µg");
+  await page.locator("#availableAmount").fill("250");
+  await page.locator("#availableVolume").fill("5");
+  await page.getByRole("link", { name: "Помощ" }).click();
+
+  await expect(page).toHaveURL(/#\/documentation\/dose$/);
+
+  await page.goBack();
+
+  await expect(page).toHaveURL(/#dose$/);
+  await expect(page.locator("#requiredDose")).toHaveValue("125");
+  await expect(page.locator("select[name='requiredDoseUnit']")).toHaveValue("µg");
+  await expect(page.locator("#availableAmount")).toHaveValue("250");
+  await expect(page.locator("#availableVolume")).toHaveValue("5");
+});
+
+test("new calculation clears the current calculator without returning home", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Доза от готов разтвор/ }).click();
+
+  await page.locator("#requiredDose").fill("125");
+  await page.locator("#availableAmount").fill("250");
+  await page.locator("#availableVolume").fill("5");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+  await page.getByRole("button", { name: "Ново изчисление" }).click();
+
+  await expect(page).toHaveURL(/#dose$/);
+  await expect(page.getByRole("heading", { name: "Доза от готов разтвор" })).toBeVisible();
+  await expect(page.locator("#requiredDose")).toHaveValue("");
+  await expect(page.locator("#availableAmount")).toHaveValue("");
+  await expect(page.locator("#availableVolume")).toHaveValue("");
+  await expect(page.getByLabel("Резултат от изчислението")).toHaveCount(0);
+});
+
 test("dilution calculator rejects impossible concentration and focuses the target field", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Разреждане до количество в 1 mL/ }).click();
+  await page.getByRole("button", { name: /Разреждане до желано количество в 1 мл/ }).click();
 
   await page.locator("#availableAmount").fill("4");
   await page.locator("#availableVolume").fill("2");
@@ -40,7 +79,7 @@ test("dilution calculator rejects impossible concentration and focuses the targe
 
 test("dilution calculator shows unit conversions, instructions, and trace", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Разреждане до количество в 1 mL/ }).click();
+  await page.getByRole("button", { name: /Разреждане до желано количество в 1 мл/ }).click();
 
   await page.locator("#availableAmount").fill("10");
   await page.locator("#availableVolume").fill("0.001");
@@ -54,6 +93,58 @@ test("dilution calculator shows unit conversions, instructions, and trace", asyn
   await expect(page.getByText("0.001 L = 1 mL")).toBeVisible();
   await expect(page.getByText("500 µg/mL = 0.5 mg/mL")).toBeVisible();
   await expect(page.getByText("10 mg ÷ 500 µg/mL = 20 mL")).toBeVisible();
+});
+
+test("dilution calculator supports amount-only preparation without initial volume", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Разреждане до желано количество в 1 мл/ }).click();
+
+  await page.locator("#availableAmount").fill("1");
+  await page.locator("select[name='availableAmountUnit']").selectOption("g");
+  await page.locator("#targetConcentration").fill("100");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("10 mL").first()).toBeVisible();
+  await expect(page.getByText("Използвайте 1 g лекарство.")).toBeVisible();
+  await expect(page.getByText("Пригответе до краен обем 10 mL с посочения разтворител.")).toBeVisible();
+  await expect(page.getByText("1 g ÷ 100 mg/mL = 10 mL")).toBeVisible();
+});
+
+test("dilution calculator supports concentration-to-concentration dilution", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Разреждане до желано количество в 1 мл/ }).click();
+
+  await page.locator("label[for='mode-dilution-concentration']").click();
+  await page.locator("#sourceConcentration").fill("10");
+  await page.locator("#sourceVolume").fill("5");
+  await page.locator("#targetConcentration").fill("2");
+  await page.locator("select[name='targetConcentrationUnit']").selectOption("%");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("25 mL").first()).toBeVisible();
+  await expect(page.getByText("Добавете 20 mL от посочения разтворител.")).toBeVisible();
+  await expect(page.getByText("100 mg/mL × 5 mL = 500 mg")).toBeVisible();
+  await expect(page.getByText("25 mL - 5 mL = 20 mL")).toBeVisible();
+});
+
+test("dilution history restores the selected tab", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Разреждане до желано количество в 1 мл/ }).click();
+
+  await page.locator("label[for='mode-dilution-concentration']").click();
+  await page.locator("#sourceConcentration").fill("10");
+  await page.locator("#sourceVolume").fill("5");
+  await page.locator("#targetConcentration").fill("2");
+  await page.locator("select[name='targetConcentrationUnit']").selectOption("%");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await page.getByRole("button", { name: "История" }).click();
+  await page.getByRole("button", { name: "Отвори" }).first().click();
+
+  await expect(page.locator("#mode-dilution-concentration")).toBeChecked();
+  await expect(page.locator("#sourceConcentration")).toHaveValue("10");
+  await expect(page.locator("#sourceVolume")).toHaveValue("5");
+  await expect(page.getByText("25 mL").first()).toBeVisible();
 });
 
 test("reconstitution calculator supports manufacturer final volume and optional dose", async ({ page }) => {
@@ -87,7 +178,19 @@ test("reconstitution calculator calculates final volume from desired amount in 1
 
 test("infusion calculator handles dose-rate and volume-time modes separately", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Инфузионна скорост/ }).click();
+  await page.getByRole("button", { name: /Инфузионен калкулатор/ }).click();
+
+  await expect(page.locator("#mode-amount")).toBeChecked();
+  await page.locator("#amountPatientWeight").fill("1");
+  await page.locator("#amountPrescribedRate").fill("5");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("7.2 mg").first()).toBeVisible();
+  await expect(page.getByText("5 µg/min × 60 min/h × 24 h = 7200 µg = 7.2 mg")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Продължи в „Доза за час“" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Промени" }).click();
+  await page.locator("label[for='mode-dose']").click();
 
   await page.locator("#medicationAmount").fill("500");
   await page.locator("#finalVolume").fill("250");

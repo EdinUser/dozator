@@ -35,6 +35,11 @@ describe("share links", () => {
       v: 1,
       calculator: "dilution",
       values: {
+        mode: "concentration",
+        sourceConcentration: "10",
+        sourceConcentrationUnit: "%",
+        sourceVolume: "5",
+        sourceVolumeUnit: "mL",
         availableAmount: "40",
         availableAmountUnit: "mg",
         availableVolume: "4",
@@ -51,6 +56,11 @@ describe("share links", () => {
       v: 1,
       calculator: "dilution",
       values: {
+        mode: "concentration",
+        sourceConcentration: "10",
+        sourceConcentrationUnit: "%",
+        sourceVolume: "5",
+        sourceVolumeUnit: "mL",
         availableAmount: "40",
         availableAmountUnit: "mg",
         availableVolume: "4",
@@ -58,6 +68,25 @@ describe("share links", () => {
         targetConcentration: "2",
         targetConcentrationUnit: "mg/mL",
       },
+    });
+  });
+
+  it("keeps tab mode fields for infusion calculations", () => {
+    expect(
+      shareableValues("infusion", {
+        mode: "medicationAmount",
+        amountPatientWeight: "1",
+        amountPatientWeightUnit: "kg",
+        amountPrescribedRate: "5",
+        amountPrescribedRateUnit: "µg/kg/min",
+        patientName: "not allowed",
+      }),
+    ).toEqual({
+      mode: "medicationAmount",
+      amountPatientWeight: "1",
+      amountPatientWeightUnit: "kg",
+      amountPrescribedRate: "5",
+      amountPrescribedRateUnit: "µg/kg/min",
     });
   });
 

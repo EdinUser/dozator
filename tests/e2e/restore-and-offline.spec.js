@@ -92,9 +92,9 @@ test("initial form examples are placeholders and focused values are selected", a
 test("screen hash URLs load and survive reload", async ({ page }) => {
   for (const route of [
     { hash: "dose", heading: "Доза от готов разтвор" },
-    { hash: "dilution", heading: "Разреждане до количество в 1 mL" },
+    { hash: "dilution", heading: "Разреждане до желано количество в 1 мл" },
     { hash: "reconstitution", heading: "Разтваряне на флакон" },
-    { hash: "infusion", heading: "Инфузионна скорост" },
+    { hash: "infusion", heading: "Инфузионен калкулатор" },
     { hash: "validation", heading: "Как са проверени изчисленията" },
     { hash: "documentation", heading: "Документация" },
     { hash: "documentation/dose", heading: "Доза от готов разтвор" },
@@ -114,15 +114,15 @@ test("calculator documentation links open the matching documentation section", a
 
   await expect(page).toHaveURL(/#\/documentation\/infusion$/);
   await expect(page.locator("#documentation-infusion")).toBeFocused();
-  await expect(page.locator("#documentation-infusion").getByRole("heading", { name: "Инфузионна скорост" })).toBeInViewport();
-  await expect(page.getByText("Какво се изчислява").last()).toBeInViewport();
-  await expect(page.locator("#documentation-infusion .documentation-figure")).not.toBeInViewport();
-  await expect(page.getByRole("heading", { name: "Инфузионна скорост" })).toBeVisible();
-  await expect(page.getByText("Изчислява скорост на помпа в mL/h")).toBeVisible();
+  await expect(page.locator("#documentation-infusion").getByRole("heading", { name: "Инфузионен калкулатор" })).toBeInViewport();
+  await expect(page.locator("#documentation-infusion").getByText("Кога се използва").first()).toBeInViewport();
+  await expect(page.locator("#documentation-infusion .documentation-figure").first()).not.toBeInViewport();
+  await expect(page.getByRole("heading", { name: "Инфузионен калкулатор" })).toBeVisible();
+  await expect(page.getByText("Инфузионният калкулатор има отделни режими.")).toBeVisible();
 
   await page.locator("#documentation-infusion").getByRole("link", { name: "Към калкулатора" }).click();
   await expect(page).toHaveURL(/#infusion$/);
-  await expect(page.getByRole("heading", { name: "Инфузионна скорост" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Инфузионен калкулатор" })).toBeVisible();
 });
 
 test("scroll-to-top button returns long documentation pages to the top", async ({ page }) => {
