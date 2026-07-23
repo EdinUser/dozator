@@ -158,3 +158,53 @@ export function calculateInfusionVolumeTime(input) {
     },
   };
 }
+
+export function calculateInfusionMedicationAmount(input) {
+  const fieldErrors = validatePositiveFieldEntries([
+    { name: "amountPatientWeight", label: bg.fields.patientWeight, value: input.amountPatientWeight },
+    { name: "amountPrescribedRate", label: bg.fields.doseByWeight, value: input.amountPrescribedRate },
+  ]);
+
+  if (fieldErrors.length) {
+    return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
+  }
+
+  const weightKg = parseDecimal(input.amountPatientWeight);
+  const dosePerKgPerMinute = parseDecimal(input.amountPrescribedRate);
+  const dosePerMinute = dosePerKgPerMinute * weightKg;
+  const totalDose = dosePerMinute * 60 * 24;
+  const isMicrogram = input.amountPrescribedRateUnit.startsWith("µg/");
+  const medicationMg = isMicrogram ? toMg(totalDose, "µg") : totalDose;
+  const doseUnit = isMicrogram ? "µg" : "mg";
+
+  return {
+    ok: true,
+    primary: formatMassMg(medicationMg),
+    instructions: [
+      bg.calculations.infusion.totalDose24(formatMassMg(medicationMg)),
+      bg.calculations.infusion.useInDoseRateCalculator,
+    ],
+    finalLines: [
+      bg.calculations.infusion.amount(formatMassMg(medicationMg)),
+      bg.calculations.infusion.weight(formatNumber(weightKg)),
+      bg.calculations.infusion.doseByWeightLine(`${formatNumber(dosePerKgPerMinute)} ${input.amountPrescribedRateUnit}`),
+    ],
+    notices: [],
+    traces: [
+      `${formatNumber(weightKg)} kg × ${formatNumber(dosePerKgPerMinute)} ${input.amountPrescribedRateUnit} = ${formatNumber(dosePerMinute)} ${doseUnit}/min`,
+      `${formatNumber(dosePerMinute)} ${doseUnit}/min × 60 min/h × 24 h = ${formatNumber(totalDose)} ${doseUnit}${isMicrogram ? ` = ${formatMassMg(medicationMg)}` : ""}`,
+    ],
+    warnings: highAlertWarning(input.highAlert),
+    carryForward: {
+      targetMode: "doseRate",
+      medicationAmountMg: medicationMg,
+      patientWeightKg: weightKg,
+    },
+    label: {
+      totalAmount: formatMassMg(medicationMg),
+      finalVolume: "",
+      concentration: "",
+      recipe: bg.calculations.infusion.medicationAmountRecipe(formatMassMg(medicationMg)),
+    },
+  };
+}

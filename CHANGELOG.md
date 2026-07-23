@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+- Add dilution tabs for amount-based dilution and concentration-to-concentration dilution.
+- Add infusion medication amount for 24 hours as the default infusion mode, with continuation into dose-rate calculation.
+- Preserve calculator form drafts when opening calculator documentation.
+- Keep current calculator context when starting a new calculation.
+- Refresh user and system documentation for tabbed calculators, formulas, screenshots, restore behavior, and privacy boundaries.
+- Expand unit, golden, share, view, accessibility, restore, and E2E coverage for the updated workflows.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.4.0
 
 - Add in-app calculator documentation with dedicated documentation routes, per-calculator sections, and screenshots.

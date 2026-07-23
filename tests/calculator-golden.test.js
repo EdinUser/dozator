@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateDilution } from "../src/calculators/dilution.js";
 import { calculateDose } from "../src/calculators/dose.js";
-import { calculateInfusionDoseRate, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
+import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
 import { calculateReconstitution } from "../src/calculators/reconstitution.js";
 
 describe("golden calculator scenarios", () => {
@@ -56,6 +56,34 @@ describe("golden calculator scenarios", () => {
       },
     },
     {
+      name: "dilution from concentration to lower concentration",
+      calculate: calculateDilution,
+      input: {
+        mode: "concentration",
+        sourceConcentration: "10",
+        sourceConcentrationUnit: "%",
+        sourceVolume: "5",
+        sourceVolumeUnit: "mL",
+        targetConcentration: "2",
+        targetConcentrationUnit: "%",
+        highAlert: false,
+      },
+      primary: "25 mL",
+      instructions: [
+        "Използвайте 5 mL от началния разтвор с концентрация 100 mg/mL.",
+        "Добавете 20 mL от посочения разтворител.",
+        "Краен обем: 25 mL.",
+        "Крайно количество в 1 mL: 20 mg/mL, което е 2% разтвор.",
+      ],
+      traces: ["100 mg/mL × 5 mL = 500 mg", "500 mg ÷ 20 mg/mL = 25 mL", "25 mL - 5 mL = 20 mL"],
+      finalLines: ["Начална концентрация: 100 mg/mL", "Краен обем: 25 mL", "Количество в 1 mL: 20 mg/mL"],
+      label: {
+        totalAmount: "500 mg",
+        finalVolume: "25 mL",
+        concentration: "20 mg/mL",
+      },
+    },
+    {
       name: "vial reconstitution with dose withdrawal",
       calculate: calculateReconstitution,
       input: {
@@ -82,6 +110,29 @@ describe("golden calculator scenarios", () => {
         totalAmount: "1 g",
         finalVolume: "10 mL",
         concentration: "100 mg/mL",
+      },
+    },
+    {
+      name: "infusion medication amount for 24 hours",
+      calculate: calculateInfusionMedicationAmount,
+      input: {
+        amountPatientWeight: "1",
+        amountPatientWeightUnit: "kg",
+        amountPrescribedRate: "5",
+        amountPrescribedRateUnit: "µg/kg/min",
+        highAlert: false,
+      },
+      primary: "7.2 mg",
+      instructions: [
+        "Количество лекарство за 24 h: 7.2 mg.",
+        "Използвайте това количество в режим „Доза за час“ като поле „Количество лекарство“.",
+      ],
+      traces: ["1 kg × 5 µg/kg/min = 5 µg/min", "5 µg/min × 60 min/h × 24 h = 7200 µg = 7.2 mg"],
+      finalLines: ["Количество: 7.2 mg", "Тегло: 1 kg", "Доза по kg/min: 5 µg/kg/min"],
+      label: {
+        totalAmount: "7.2 mg",
+        finalVolume: "",
+        concentration: "",
       },
     },
     {

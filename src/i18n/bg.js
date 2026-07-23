@@ -6,6 +6,7 @@ export const bg = {
     skipToContent: "Към съдържанието",
     version: (version) => `Версия ${version}`,
     offlineReady: "Работи офлайн след първоначално зареждане.",
+    warningTitle: "Внимание!",
     safetyStrip: "Проверява аритметиката. Не замества назначение, инструкция на производителя, аптека или болничен протокол.",
   },
   calculators: {
@@ -16,8 +17,8 @@ export const bg = {
       menuDescription: "Обем за изтегляне",
     },
     dilution: {
-      title: "Разреждане до количество в 1 mL",
-      subtitle: "Изчислява крайния обем и разтворителя за желано количество лекарство в 1 mL.",
+      title: "Разреждане до желано количество в 1 мл",
+      subtitle: "Изчислява крайния обем за желано количество лекарство в 1 mL; при въведен начален обем изчислява и добавения разтворител.",
       homeDescription: "Колко лекарство и разтворител",
       menuDescription: "Лекарство плюс разтворител",
     },
@@ -28,10 +29,10 @@ export const bg = {
       menuDescription: "Разтворен флакон",
     },
     infusion: {
-      title: "Инфузионна скорост",
-      subtitle: "Изчислява mL/h по доза или по обем и време.",
-      homeDescription: "mL/h по доза или време",
-      menuDescription: "Скорост на помпа",
+      title: "Инфузионен калкулатор",
+      subtitle: "Изчислява количество лекарство, скорост на помпа или mL/h по обем и време.",
+      homeDescription: "Количество, скорост или време",
+      menuDescription: "Инфузионни изчисления",
     },
   },
   actions: {
@@ -52,6 +53,7 @@ export const bg = {
     save: "Запази",
     delete: "Изтрий",
     help: "Помощ",
+    continueToDoseRate: "Продължи в „Доза за час“",
     shareQr: "QR код",
     scrollToTop: "Към началото",
   },
@@ -104,11 +106,12 @@ export const bg = {
         title: "Формули",
         lines: [
           "Доза от готов разтвор: доза / налично количество в 1 mL.",
-          "Разреждане до количество в 1 mL: краен обем = общо количество / желано количество в 1 mL; разтворител = краен обем - обем на ампулата/флакона.",
+          "Разреждане до желано количество в 1 mL: краен обем = общо количество / желано количество в 1 mL; ако е въведен начален обем, разтворител = краен обем - начален обем.",
           "Флакон: количество в 1 mL = количество / краен разтворен обем; или краен обем = количество / желано количество в 1 mL.",
           "Инфузия по дозова скорост: количество в 1 mL = количество / краен обем; mL/h = обща доза за час / количество в 1 mL.",
           "Инфузия по kg: /min се умножава по kg и по 60; /h се умножава по kg без x60.",
           "Инфузия по обем и време: mL/h = обем / време.",
+          "Количество лекарство за инфузия: обща доза = дозова скорост по kg × време; краен обем = скорост на помпа × време.",
         ],
       },
       {
@@ -179,11 +182,21 @@ export const bg = {
       inVolume: "Обем на опаковката",
     },
     dilution: {
+      mode: "Режим",
+      modeAriaLabel: "Режим за разреждане",
+      amountMode: "От количество лекарство",
+      amountDescription: "Имате общо количество лекарство и желано количество в 1 mL.",
+      concentrationMode: "От концентрация",
+      concentrationDescription: "Имате начален разтвор и искате да го разредите до по-ниска концентрация.",
       container: "Ампула/флакон",
       containerAmount: "Количество лекарство",
-      containerVolume: "Обем на ампулата/флакона",
+      containerVolume: "Обем на ампулата/флакона, ако е известен",
+      sourceSolution: "Начален разтвор",
+      sourceConcentration: "Начална концентрация",
+      sourceVolume: "Начален обем",
       target: "Желан краен разтвор",
       targetAmountPerMl: "Желано количество в 1 mL",
+      targetConcentration: "Желана крайна концентрация",
     },
     reconstitution: {
       vial: "Флакон",
@@ -197,19 +210,24 @@ export const bg = {
     },
     infusion: {
       mode: "Режим",
-      modeAriaLabel: "Режим за инфузионна скорост",
+      modeAriaLabel: "Режим за инфузионен калкулатор",
       doseRateMode: "Доза за час",
       doseRateDescription: "Имате количество лекарство, краен обем и назначена скорост, включително по kg.",
       volumeTimeMode: "Обем и време",
       volumeTimeDescription: "Имате общ обем и време за вливане.",
+      medicationAmountMode: "Доза за лекарствено вещество за 24 часа",
+      medicationAmountDescription: "Имате тегло и доза по kg/min. Резултатът е количество лекарство за 24 h.",
       infusion: "Инфузия",
       medicationAmount: "Количество лекарство",
+      medicationAmountPreparation: "Количество лекарство за 24 часа",
       finalVolume: "Краен обем",
       patientWeight: "Тегло на пациента",
-      prescribedRate: "Назначена дозова скорост",
+      prescribedRate: "Назначена доза за единица време",
+      doseByWeight: "Доза по kg/min",
       hoursToRun: "Часове за вливане",
       volumeTime: "Обем и време",
       volume: "Обем",
+      volumeRate: "Скорост на инфузия",
       time: "Време",
     },
     common: {
@@ -222,6 +240,7 @@ export const bg = {
       amountPerMlPlaceholder: "въведете количество в 1 mL",
       weightPlaceholder: "въведете kg",
       ratePlaceholder: "по назначение",
+      volumeRatePlaceholder: "mL/h",
       hoursPlaceholder: "часове",
       timePlaceholder: "въведете време",
       unitAriaLabel: (label) => `${label} единица`,
@@ -232,6 +251,8 @@ export const bg = {
     availableAmount: "Налично количество",
     availableVolume: "Наличен обем",
     targetAmountPerMl: "Желано количество в 1 mL",
+    sourceConcentration: "Начална концентрация",
+    sourceVolume: "Начален обем",
     containerAmount: "Количество лекарство в ампула/флакон",
     containerVolume: "Обем на ампула/флакон",
     finalVolume: "Краен обем",
@@ -240,7 +261,9 @@ export const bg = {
     finalReconstitutedVolume: "Краен разтворен обем",
     medicationAmount: "Количество лекарство",
     patientWeight: "Тегло на пациента",
-    prescribedRate: "Назначена дозова скорост",
+    prescribedRate: "Назначена доза за единица време",
+    doseByWeight: "Доза по kg/min",
+    volumeRate: "Скорост на инфузия",
     hoursToRun: "Часове за вливане",
     volume: "Обем",
     time: "Време",
@@ -255,14 +278,19 @@ export const bg = {
       impossibleTarget: "Желаното количество в 1 mL е по-високо от наличното. Това не може да се получи чрез разреждане.",
       medicationVolumeGreaterThanFinal: "Необходимият обем от лекарството е по-голям от крайния обем.",
       useContainer: (amount, volume) => `Използвайте ${amount} в ${volume} от ампулата/флакона.`,
+      useAmountOnly: (amount) => `Използвайте ${amount} лекарство.`,
+      useSourceSolution: (volume, concentration) => `Използвайте ${volume} от началния разтвор с концентрация ${concentration}.`,
+      prepareToFinalVolume: (volume) => `Пригответе до краен обем ${volume} с посочения разтворител.`,
       addDiluent: (volume) => `Добавете ${volume} от посочения разтворител.`,
       finalVolume: (volume) => `Краен обем: ${volume}.`,
       finalConcentration: (concentration, solutionDescription = "") =>
         `Крайно количество в 1 mL: ${concentration}${solutionDescription ? `, което е ${solutionDescription}` : ""}.`,
       totalAmount: (amount) => `Общо количество: ${amount}`,
+      sourceConcentrationLine: (concentration) => `Начална концентрация: ${concentration}`,
       finalVolumeLine: (volume) => `Краен обем: ${volume}`,
       finalConcentrationLine: (concentration) => `Количество в 1 mL: ${concentration}`,
       recipe: (medicationVolume, diluentVolume) => `Използвайте ${medicationVolume} от ампулата/флакона. Добавете ${diluentVolume} разтворител.`,
+      amountOnlyRecipe: (finalVolume) => `Пригответе до краен обем ${finalVolume}.`,
     },
     reconstitution: {
       addDiluent: (volume) => `Добавете ${volume} от посочения разтворител към флакона.`,
@@ -282,9 +310,13 @@ export const bg = {
     infusion: {
       concentration: (concentration) => `Количество лекарство в 1 mL от инфузията: ${concentration}.`,
       setPump: (rate) => `Настройте помпата на ${rate} mL/h.`,
+      totalDose: (amount) => `Необходимо количество лекарство: ${amount}.`,
+      totalDose24: (amount) => `Количество лекарство за 24 h: ${amount}.`,
+      useInDoseRateCalculator: "Използвайте това количество в режим „Доза за час“ като поле „Количество лекарство“.",
       amount: (amount) => `Количество: ${amount}`,
       finalVolume: (volume) => `Краен обем: ${volume}`,
       weight: (weight) => `Тегло: ${weight} kg`,
+      doseByWeightLine: (dose) => `Доза по kg/min: ${dose}`,
       speed: (rate) => `Обща дозова скорост: ${rate} mg/h`,
       hoursToRun: (hours) => `Часове за вливане: ${hours} h`,
       volumeRate: (rate, hours) => `Ако целият обем се влива за ${hours} h, скоростта по обем е ${rate} mL/h.`,
@@ -292,13 +324,16 @@ export const bg = {
       volume: (volume) => `Обем: ${volume}`,
       time: (hours) => `Време: ${hours} h`,
       volumeTimeRecipe: (volume, hours, rate) => `Инфузирайте ${volume} за ${hours} h при ${rate} mL/h.`,
+      medicationAmountRecipe: (amount) => `Количество лекарство за 24 h: ${amount}.`,
     },
   },
   summaries: {
     dose: (values) =>
       `${values.requiredDose} ${values.requiredDoseUnit} от ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
     dilution: (values) =>
-      `${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit} към ${values.targetConcentration} ${values.targetConcentrationUnit}`,
+      values.mode === "concentration"
+        ? `${values.sourceConcentration} ${values.sourceConcentrationUnit} в ${values.sourceVolume} ${values.sourceVolumeUnit} към ${values.targetConcentration} ${values.targetConcentrationUnit}`
+        : `${values.availableAmount} ${values.availableAmountUnit}${values.availableVolume ? ` в ${values.availableVolume} ${values.availableVolumeUnit}` : ""} към ${values.targetConcentration} ${values.targetConcentrationUnit}`,
     reconstitution: (values) =>
       values.requiredDose
         ? `${values.vialAmount} ${values.vialAmountUnit}${values.finalVolume ? `, ${values.finalVolume} ${values.finalVolumeUnit}` : ""}, доза ${values.requiredDose} ${values.requiredDoseUnit}`
@@ -306,17 +341,27 @@ export const bg = {
     infusion: (values) =>
       values.mode === "volumeTime"
         ? `${values.volume} ${values.volumeUnit} за ${values.time} ${values.timeUnit}`
-        : `${values.medicationAmount} ${values.medicationAmountUnit} в ${values.finalVolume} ${values.finalVolumeUnit}, ${values.prescribedRate} ${values.prescribedRateUnit}${values.prescribedRateUnit?.includes("/kg/") ? `, ${values.patientWeight} kg` : ""}${values.hoursToRun ? `, ${values.hoursToRun} h` : ""}`,
+        : values.mode === "medicationAmount"
+          ? `${values.amountPatientWeight} kg, ${values.amountPrescribedRate} ${values.amountPrescribedRateUnit}`
+          : `${values.medicationAmount} ${values.medicationAmountUnit} в ${values.finalVolume} ${values.finalVolumeUnit}, ${values.prescribedRate} ${values.prescribedRateUnit}${values.prescribedRateUnit?.includes("/kg/") ? `, ${values.patientWeight} kg` : ""}${values.hoursToRun ? `, ${values.hoursToRun} h` : ""}`,
   },
   inputSummary: {
     dose: (values) => [
       `Доза: ${values.requiredDose} ${values.requiredDoseUnit}`,
       `Налично: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
     ],
-    dilution: (values) => [
-      `Ампула/флакон: ${values.availableAmount} ${values.availableAmountUnit} в ${values.availableVolume} ${values.availableVolumeUnit}`,
-      `Желано количество в 1 mL: ${values.targetConcentration} ${values.targetConcentrationUnit}`,
-    ],
+    dilution: (values) =>
+      values.mode === "concentration"
+        ? [
+            `Начална концентрация: ${values.sourceConcentration} ${values.sourceConcentrationUnit}`,
+            `Начален обем: ${values.sourceVolume} ${values.sourceVolumeUnit}`,
+            `Желана крайна концентрация: ${values.targetConcentration} ${values.targetConcentrationUnit}`,
+          ]
+        : [
+            `Количество лекарство: ${values.availableAmount} ${values.availableAmountUnit}`,
+            ...(values.availableVolume ? [`Начален обем: ${values.availableVolume} ${values.availableVolumeUnit}`] : []),
+            `Желано количество в 1 mL: ${values.targetConcentration} ${values.targetConcentrationUnit}`,
+          ],
     reconstitution: (values) => [
       `Флакон: ${values.vialAmount} ${values.vialAmountUnit}`,
       ...(values.diluentVolume ? [`Разтворител: ${values.diluentVolume} ${values.diluentVolumeUnit}`] : []),
@@ -326,7 +371,12 @@ export const bg = {
     infusion: (values) =>
       values.mode === "volumeTime"
         ? [`Обем: ${values.volume} ${values.volumeUnit}`, `Време: ${values.time} ${values.timeUnit}`]
-        : [
+        : values.mode === "medicationAmount"
+          ? [
+              `Тегло: ${values.amountPatientWeight} kg`,
+              `Доза по kg/min: ${values.amountPrescribedRate} ${values.amountPrescribedRateUnit}`,
+            ]
+          : [
             `Количество: ${values.medicationAmount} ${values.medicationAmountUnit}`,
             `Краен обем: ${values.finalVolume} ${values.finalVolumeUnit}`,
             ...(values.prescribedRateUnit?.includes("/kg/") ? [`Тегло: ${values.patientWeight} kg`] : []),

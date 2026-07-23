@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateDilution } from "../src/calculators/dilution.js";
 import { calculateDose } from "../src/calculators/dose.js";
-import { calculateInfusionDoseRate, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
+import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
 import { calculateReconstitution } from "../src/calculators/reconstitution.js";
 
 describe("dose calculator", () => {
@@ -85,6 +85,25 @@ describe("dilution calculator", () => {
     expect(result.instructions).toContain("Добавете 16 mL от посочения разтворител.");
   });
 
+  it("calculates final volume from medication amount when no initial volume is known", () => {
+    const result = calculateDilution({
+      availableAmount: "1",
+      availableAmountUnit: "g",
+      availableVolume: "",
+      availableVolumeUnit: "mL",
+      targetConcentration: "100",
+      targetConcentrationUnit: "mg/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.instructions).toContain("Използвайте 1 g лекарство.");
+    expect(result.instructions).toContain("Пригответе до краен обем 10 mL с посочения разтворител.");
+    expect(result.traces).toEqual(["1 g ÷ 100 mg/mL = 10 mL"]);
+    expect(result.label.recipe).toBe("Пригответе до краен обем 10 mL.");
+  });
+
   it("allows no-diluent case when target equals available amount in 1 mL", () => {
     const result = calculateDilution({
       availableAmount: "20",
@@ -147,6 +166,28 @@ describe("dilution calculator", () => {
     expect(result.primary).toBe("20 mL");
     expect(result.notices).toContain("500 µg/mL = 0.5 mg/mL");
   });
+
+  it("dilutes from concentration to a lower concentration", () => {
+    const result = calculateDilution({
+      mode: "concentration",
+      sourceConcentration: "10",
+      sourceConcentrationUnit: "%",
+      sourceVolume: "5",
+      sourceVolumeUnit: "mL",
+      targetConcentration: "2",
+      targetConcentrationUnit: "%",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("25 mL");
+    expect(result.instructions).toContain("Добавете 20 mL от посочения разтворител.");
+    expect(result.traces).toEqual([
+      "100 mg/mL × 5 mL = 500 mg",
+      "500 mg ÷ 20 mg/mL = 25 mL",
+      "25 mL - 5 mL = 20 mL",
+    ]);
+  });
 });
 
 describe("reconstitution calculator", () => {
@@ -191,6 +232,29 @@ describe("reconstitution calculator", () => {
 });
 
 describe("infusion calculators", () => {
+  it("calculates medication amount for 24 hours from weight and micrograms per kg per minute", () => {
+    const result = calculateInfusionMedicationAmount({
+      amountPatientWeight: "1",
+      amountPatientWeightUnit: "kg",
+      amountPrescribedRate: "5",
+      amountPrescribedRateUnit: "µg/kg/min",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("7.2 mg");
+    expect(result.instructions).toContain("Количество лекарство за 24 h: 7.2 mg.");
+    expect(result.traces).toEqual([
+      "1 kg × 5 µg/kg/min = 5 µg/min",
+      "5 µg/min × 60 min/h × 24 h = 7200 µg = 7.2 mg",
+    ]);
+    expect(result.carryForward).toEqual({
+      targetMode: "doseRate",
+      medicationAmountMg: 7.2,
+      patientWeightKg: 1,
+    });
+  });
+
   it("calculates pump rate from medication amount and prescribed mg per hour", () => {
     const result = calculateInfusionDoseRate({
       medicationAmount: "500",
