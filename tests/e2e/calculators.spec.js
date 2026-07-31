@@ -22,6 +22,31 @@ test("dose calculator shows result, instructions, and verification", async ({ pa
   await expect(page.getByText("Въведени данни")).toBeVisible();
 });
 
+test("dose calculator locks related quantity units when IU is selected", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Доза от готов разтвор/ }).click();
+
+  await page.locator("select[name='requiredDoseUnit']").selectOption("IU");
+
+  await expect(page.locator("select[name='availableAmountUnit']")).toHaveValue("IU");
+  await expect(page.locator("select[name='availableAmountUnit'] option[value='mg']")).toBeDisabled();
+
+  await page.locator("#requiredDose").fill("2500");
+  await page.locator("#availableAmount").fill("10000");
+  await page.locator("#availableVolume").fill("2");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("0.5 mL").first()).toBeVisible();
+  await expect(page.getByText("2500 IU ÷ 5000 IU/mL = 0.5 mL")).toBeVisible();
+
+  await page.getByRole("button", { name: "Назад" }).click();
+  await page.getByRole("button", { name: /Инфузионен калкулатор/ }).click();
+
+  await expect(page.locator("select[name='amountPrescribedRateUnit'] option[value*='IU']")).toHaveCount(0);
+  await expect(page.locator("select[name='prescribedRateUnit'] option[value='IU/h']")).toHaveCount(1);
+  await expect(page.locator("select[name='prescribedRateUnit'] option[value='IU/kg/min']")).toHaveCount(0);
+});
+
 test("calculator documentation round-trip keeps form values", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Доза от готов разтвор/ }).click();
@@ -226,4 +251,61 @@ test("infusion calculator handles dose-rate and volume-time modes separately", a
 
   await expect(page.getByText("125 mL/h").first()).toBeVisible();
   await expect(page.getByText("500 mL ÷ 4 h = 125 mL/h")).toBeVisible();
+});
+
+test("infusion dose-rate mode supports simple IU per hour", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Инфузионен калкулатор/ }).click();
+  await page.locator("label[for='mode-dose']").click();
+
+  await page.locator("select[name='medicationAmountUnit']").selectOption("IU");
+
+  await expect(page.locator("select[name='prescribedRateUnit']")).toHaveValue("IU/h");
+  await expect(page.locator("select[name='prescribedRateUnit'] option[value='mg/h']")).toBeDisabled();
+  await expect(page.locator("select[name='prescribedRateUnit'] option[value='IU/kg/min']")).toHaveCount(0);
+
+  await page.locator("#medicationAmount").fill("10000");
+  await page.locator("#finalVolume").fill("100");
+  await page.locator("#prescribedRate").fill("500");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("5 mL/h").first()).toBeVisible();
+  await expect(page.getByText("500 IU/h ÷ 100 IU/mL = 5 mL/h")).toBeVisible();
+});
+
+test("IU converter converts in both directions and transfers result to dose calculator", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /IU към маса/ }).click();
+
+  await page.locator("#relationshipIu").fill("1");
+  await page.locator("#relationshipMass").fill("0.025");
+  await page.locator("#amountToConvert").fill("2000");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("50 µg").first()).toBeVisible();
+  await expect(page.getByText("2000 IU × 0.000025 mg/IU = 50 µg")).toBeVisible();
+  await page.getByRole("button", { name: "Използвай в калкулатор" }).click();
+
+  await expect(page).toHaveURL(/#dose$/);
+  await expect(page.locator("#requiredDose")).toHaveValue("50");
+  await expect(page.locator("select[name='requiredDoseUnit']")).toHaveValue("µg");
+  await expect(page.locator("select[name='availableAmountUnit'] option[value='IU']")).toBeDisabled();
+
+  await page.getByRole("button", { name: "Назад" }).click();
+  await page.getByRole("button", { name: /IU към маса/ }).click();
+  await page.locator("label[for='mode-mass-to-iu']").click();
+  await page.locator("#relationshipIu").fill("1");
+  await page.locator("#relationshipMass").fill("0.025");
+  await page.locator("#amountToConvertMass").fill("50");
+  await page.getByRole("button", { name: "Изчисли" }).click();
+
+  await expect(page.getByText("2000 IU").first()).toBeVisible();
+  await expect(page.getByText("0.05 mg ÷ 0.000025 mg/IU = 2000 IU")).toBeVisible();
+  await page.getByRole("button", { name: "Използвай в калкулатор" }).click();
+
+  await expect(page).toHaveURL(/#dose$/);
+  await expect(page.locator("#requiredDose")).toHaveValue("2000");
+  await expect(page.locator("select[name='requiredDoseUnit']")).toHaveValue("IU");
+  await expect(page.locator("select[name='availableAmountUnit']")).toHaveValue("IU");
+  await expect(page.locator("select[name='availableAmountUnit'] option[value='mg']")).toBeDisabled();
 });

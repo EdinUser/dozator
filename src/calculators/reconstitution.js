@@ -1,12 +1,13 @@
 import {
-  directConcentrationConversionTrace,
-  directConcentrationToMgPerMl,
-  formatConcentrationMgPerMl,
-  formatMassMg,
+  compatibleQuantityDomain,
+  directQuantityConcentrationConversionTrace,
+  directConcentrationToBasePerMl,
+  formatConcentration,
+  formatQuantity,
   formatNumber,
   formatVolumeMl,
-  massConversionTrace,
-  toMg,
+  quantityConversionTrace,
+  toBaseQuantity,
   toMl,
   volumeConversionTrace,
 } from "../units/units.js";
@@ -48,53 +49,68 @@ export function calculateReconstitution(input) {
     );
   }
 
+  const quantityUnits = [
+    input.vialAmountUnit,
+    ...(hasTargetConcentration ? [input.targetConcentrationUnit] : []),
+    ...(hasRequiredDose ? [input.requiredDoseUnit] : []),
+  ];
+  const domain = compatibleQuantityDomain(quantityUnits);
+
+  if (!domain) {
+    fieldErrors.push(
+      { name: "vialAmountUnit", message: bg.safety.incompatibleQuantityUnits },
+      ...(hasTargetConcentration ? [{ name: "targetConcentrationUnit", message: bg.safety.incompatibleQuantityUnits }] : []),
+      ...(hasRequiredDose ? [{ name: "requiredDoseUnit", message: bg.safety.incompatibleQuantityUnits }] : []),
+    );
+  }
+
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
-  const vialMg = toMg(input.vialAmount, input.vialAmountUnit);
+  const vialQuantity = toBaseQuantity(input.vialAmount, input.vialAmountUnit);
   const diluentMl = hasDiluentVolume ? toMl(input.diluentVolume, input.diluentVolumeUnit) : null;
-  const targetMgPerMl = hasTargetConcentration
-    ? directConcentrationToMgPerMl(input.targetConcentration, input.targetConcentrationUnit)
+  const targetQuantityPerMl = hasTargetConcentration
+    ? directConcentrationToBasePerMl(input.targetConcentration, input.targetConcentrationUnit)
     : null;
-  const finalMl = hasFinalVolume ? toMl(input.finalVolume, input.finalVolumeUnit) : vialMg / targetMgPerMl;
-  const concentration = vialMg / finalMl;
+  const finalMl = hasFinalVolume ? toMl(input.finalVolume, input.finalVolumeUnit) : vialQuantity / targetQuantityPerMl;
+  const concentration = vialQuantity / finalMl;
   const instructions = [
     ...(diluentMl !== null ? [bg.calculations.reconstitution.addDiluent(formatVolumeMl(diluentMl))] : []),
     hasFinalVolume
       ? bg.calculations.reconstitution.useFinalVolume(formatVolumeMl(finalMl))
       : bg.calculations.reconstitution.neededFinalVolume(formatVolumeMl(finalMl)),
-    bg.calculations.reconstitution.resultingConcentration(formatConcentrationMgPerMl(concentration)),
+    bg.calculations.reconstitution.resultingConcentration(formatConcentration(concentration, domain)),
     ...(hasTargetConcentration && !hasFinalVolume ? [bg.calculations.reconstitution.finalVolumeCaution] : []),
   ];
   const finalLines = [
-    bg.calculations.reconstitution.vialAmount(formatMassMg(vialMg)),
+    bg.calculations.reconstitution.vialAmount(formatQuantity(vialQuantity, domain)),
     bg.calculations.reconstitution.finalVolume(formatVolumeMl(finalMl)),
-    bg.calculations.reconstitution.concentration(formatConcentrationMgPerMl(concentration)),
+    bg.calculations.reconstitution.concentration(formatConcentration(concentration, domain)),
   ];
-  const traces = [`${formatMassMg(vialMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`];
+  const traces = [`${formatQuantity(vialQuantity, domain)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentration(concentration, domain)}`];
   const notices = [
-    massConversionTrace(input.vialAmount, input.vialAmountUnit, "mg"),
+    quantityConversionTrace(input.vialAmount, input.vialAmountUnit, domain),
     hasDiluentVolume ? volumeConversionTrace(input.diluentVolume, input.diluentVolumeUnit, "mL") : null,
     hasFinalVolume ? volumeConversionTrace(input.finalVolume, input.finalVolumeUnit, "mL") : null,
-    hasTargetConcentration ? directConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit) : null,
+    hasTargetConcentration ? directQuantityConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit, domain) : null,
   ].filter(Boolean);
   const warnings = highAlertWarning(input.highAlert);
-  let primary = hasTargetConcentration && !hasFinalVolume ? formatVolumeMl(finalMl) : formatConcentrationMgPerMl(concentration);
+  let primary = hasTargetConcentration && !hasFinalVolume ? formatVolumeMl(finalMl) : formatConcentration(concentration, domain);
   let recipe = diluentMl !== null
     ? bg.calculations.reconstitution.baseRecipe(formatVolumeMl(diluentMl), formatVolumeMl(finalMl))
     : bg.calculations.reconstitution.finalVolumeRecipe(formatVolumeMl(finalMl));
 
   if (hasRequiredDose) {
-    const requiredMg = toMg(input.requiredDose, input.requiredDoseUnit);
-    const withdrawMl = requiredMg / concentration;
+    const requiredQuantity = toBaseQuantity(input.requiredDose, input.requiredDoseUnit);
+    const withdrawMl = requiredQuantity / concentration;
     primary = formatVolumeMl(withdrawMl);
-    instructions.push(bg.calculations.reconstitution.doseWithdraw(formatMassMg(requiredMg), formatVolumeMl(withdrawMl)));
-    finalLines.push(bg.calculations.reconstitution.doseLine(formatMassMg(requiredMg)));
-    traces.push(`${formatMassMg(requiredMg)} ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatVolumeMl(withdrawMl)}`);
-    notices.push(massConversionTrace(input.requiredDose, input.requiredDoseUnit, "mg"));
+    instructions.push(bg.calculations.reconstitution.doseWithdraw(formatQuantity(requiredQuantity, domain), formatVolumeMl(withdrawMl)));
+    finalLines.push(bg.calculations.reconstitution.doseLine(formatQuantity(requiredQuantity, domain)));
+    traces.push(`${formatQuantity(requiredQuantity, domain)} ÷ ${formatConcentration(concentration, domain)} = ${formatVolumeMl(withdrawMl)}`);
+    notices.push(quantityConversionTrace(input.requiredDose, input.requiredDoseUnit, domain));
     warnings.push(...volumeWarnings(withdrawMl));
-    recipe += ` ${bg.calculations.reconstitution.doseWithdraw(formatMassMg(requiredMg), formatVolumeMl(withdrawMl))}`;
+    recipe += ` ${bg.calculations.reconstitution.doseWithdraw(formatQuantity(requiredQuantity, domain), formatVolumeMl(withdrawMl))}`;
   }
 
   return {
@@ -106,9 +122,9 @@ export function calculateReconstitution(input) {
     traces,
     warnings,
     label: {
-      totalAmount: formatMassMg(vialMg),
+      totalAmount: formatQuantity(vialQuantity, domain),
       finalVolume: formatVolumeMl(finalMl),
-      concentration: `${formatNumber(concentration)} mg/mL`,
+      concentration: domain === "activity" ? formatConcentration(concentration, domain) : `${formatNumber(concentration)} mg/mL`,
       recipe,
     },
   };

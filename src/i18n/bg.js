@@ -34,6 +34,12 @@ export const bg = {
       homeDescription: "Количество, скорост или време",
       menuDescription: "Инфузионни изчисления",
     },
+    iuConverter: {
+      title: "IU към маса",
+      subtitle: "Преобразува IU към g, mg или µg само по въведено от потребителя съотношение.",
+      homeDescription: "С въведено съотношение IU = маса",
+      menuDescription: "IU ↔ g/mg/µg",
+    },
   },
   actions: {
     back: "Назад",
@@ -54,6 +60,7 @@ export const bg = {
     delete: "Изтрий",
     help: "Помощ",
     continueToDoseRate: "Продължи в „Доза за час“",
+    useInCalculator: "Използвай в калкулатор",
     shareQr: "QR код",
     scrollToTop: "Към началото",
   },
@@ -97,8 +104,10 @@ export const bg = {
         title: "Единици",
         lines: [
           "Масовите единици се преобразуват към mg.",
+          "IU е отделна единица за активност и не се преобразува към маса.",
           "Обемните единици се преобразуват към mL.",
-          "Директните концентрации се свеждат към mg/mL; 1% се приема като 10 mg/mL.",
+          "Mass концентрациите се свеждат към mg/mL; IU концентрациите остават IU/mL; 1% се приема като 10 mg/mL.",
+          "Dose, dilution, reconstitution и проста infusion скорост IU/h не позволяват смесване на IU с g, mg или µg.",
           "При преобразуване приложението показва приложената конверсия.",
         ],
       },
@@ -137,6 +146,7 @@ export const bg = {
     smallVolume: "Изчисленият обем е под 0.1 mL и може да не бъде измерим точно с избраната спринцовка.",
     highAlert:
       "Високорисков медикамент: направете независима двойна проверка на назначението, концентрацията на продукта, болничния протокол и изчислението.",
+    incompatibleQuantityUnits: "IU и масови единици не могат да се смесват в едно изчисление.",
     restoredCalculation:
       "Заредено е предишно изчисление. Проверете отново всички стойности спрямо текущото назначение и лекарствената опаковка.",
   },
@@ -230,6 +240,21 @@ export const bg = {
       volumeRate: "Скорост на инфузия",
       time: "Време",
     },
+    iuConverter: {
+      mode: "Посока",
+      modeAriaLabel: "Посока на IU преобразуване",
+      iuToMassMode: "IU към маса",
+      iuToMassDescription: "Имате количество в IU и известно съотношение към маса.",
+      massToIuMode: "Маса към IU",
+      massToIuDescription: "Имате количество в g, mg или µg и известно съотношение към IU.",
+      relationship: "Съотношение IU към маса",
+      relationshipIu: "IU в съотношението",
+      relationshipMass: "Маса в съотношението",
+      amount: "Количество за преобразуване",
+      amountIu: "Количество в IU",
+      amountMass: "Количество като маса",
+      resultUnit: "Единица за резултата",
+    },
     common: {
       highAlertLabel: "Лекарството е определено като високорисково според местния протокол",
       diluentLabel: "Име на използвания разтворител",
@@ -243,6 +268,8 @@ export const bg = {
       volumeRatePlaceholder: "mL/h",
       hoursPlaceholder: "часове",
       timePlaceholder: "въведете време",
+      relationshipIuPlaceholder: "например 1",
+      relationshipMassPlaceholder: "например 0.025",
       unitAriaLabel: (label) => `${label} единица`,
     },
   },
@@ -267,6 +294,9 @@ export const bg = {
     hoursToRun: "Часове за вливане",
     volume: "Обем",
     time: "Време",
+    relationshipIu: "IU в съотношението",
+    relationshipMass: "Маса в съотношението",
+    amountToConvert: "Количество за преобразуване",
   },
   calculations: {
     dose: {
@@ -317,7 +347,7 @@ export const bg = {
       finalVolume: (volume) => `Краен обем: ${volume}`,
       weight: (weight) => `Тегло: ${weight} kg`,
       doseByWeightLine: (dose) => `Доза по kg/min: ${dose}`,
-      speed: (rate) => `Обща дозова скорост: ${rate} mg/h`,
+      speed: (rate) => `Обща дозова скорост: ${rate}`,
       hoursToRun: (hours) => `Часове за вливане: ${hours} h`,
       volumeRate: (rate, hours) => `Ако целият обем се влива за ${hours} h, скоростта по обем е ${rate} mL/h.`,
       doseRateRecipe: (amount, volume, rate) => `Пригответе ${amount} в краен обем ${volume}. Настройте помпата на ${rate} mL/h.`,
@@ -325,6 +355,13 @@ export const bg = {
       time: (hours) => `Време: ${hours} h`,
       volumeTimeRecipe: (volume, hours, rate) => `Инфузирайте ${volume} за ${hours} h при ${rate} mL/h.`,
       medicationAmountRecipe: (amount) => `Количество лекарство за 24 h: ${amount}.`,
+    },
+    iuConverter: {
+      converted: (amount) => `Преобразуван резултат: ${amount}.`,
+      verifyRelationship: "Проверете въведеното съотношение спрямо документацията на продукта или друг доверен източник.",
+      relationship: (relationship) => `Използвано съотношение: ${relationship}`,
+      amount: (amount) => `Преобразувано количество: ${amount}`,
+      noDatabase: "IU съотношението е въведено от потребителя. Дозатор не поддържа база с IU конверсии.",
     },
   },
   summaries: {
@@ -344,6 +381,10 @@ export const bg = {
         : values.mode === "medicationAmount"
           ? `${values.amountPatientWeight} kg, ${values.amountPrescribedRate} ${values.amountPrescribedRateUnit}`
           : `${values.medicationAmount} ${values.medicationAmountUnit} в ${values.finalVolume} ${values.finalVolumeUnit}, ${values.prescribedRate} ${values.prescribedRateUnit}${values.prescribedRateUnit?.includes("/kg/") ? `, ${values.patientWeight} kg` : ""}${values.hoursToRun ? `, ${values.hoursToRun} h` : ""}`,
+    iuConverter: (values) =>
+      values.mode === "massToIu"
+        ? `${values.amountToConvert} ${values.amountToConvertUnit} към IU при ${values.relationshipIu} IU = ${values.relationshipMass} ${values.relationshipMassUnit}`
+        : `${values.amountToConvert} IU към ${values.resultMassUnit} при ${values.relationshipIu} IU = ${values.relationshipMass} ${values.relationshipMassUnit}`,
   },
   inputSummary: {
     dose: (values) => [
@@ -383,5 +424,9 @@ export const bg = {
             `Назначение: ${values.prescribedRate} ${values.prescribedRateUnit}`,
             ...(values.hoursToRun ? [`Часове за вливане: ${values.hoursToRun} h`] : []),
           ],
+    iuConverter: (values) => [
+      `Съотношение: ${values.relationshipIu} IU = ${values.relationshipMass} ${values.relationshipMassUnit}`,
+      values.mode === "massToIu" ? `Количество: ${values.amountToConvert} ${values.amountToConvertUnit}` : `Количество: ${values.amountToConvert} IU`,
+    ],
   },
 };

@@ -10,9 +10,11 @@ const VOLUME_FACTORS_TO_ML = {
 };
 
 export const massUnits = Object.keys(MASS_FACTORS_TO_MG);
+export const activityUnits = ["IU"];
+export const quantityUnits = [...massUnits, ...activityUnits];
 export const volumeUnits = Object.keys(VOLUME_FACTORS_TO_ML);
 export const timeUnits = ["min", "h"];
-export const concentrationUnits = ["mg/mL", "µg/mL", "units/mL", "%"];
+export const concentrationUnits = ["mg/mL", "µg/mL", "IU/mL", "%"];
 
 export function parseDecimal(value) {
   if (typeof value === "number") {
@@ -56,6 +58,69 @@ export function massConversionTrace(value, fromUnit, toUnit) {
   return `${formatNumber(value)} ${fromUnit} = ${formatNumber(fromMg(toMg(value, fromUnit), toUnit))} ${toUnit}`;
 }
 
+export function quantityUnitDomain(unit) {
+  if (massUnits.includes(unit)) {
+    return "mass";
+  }
+
+  if (activityUnits.includes(unit)) {
+    return "activity";
+  }
+
+  return null;
+}
+
+export function concentrationUnitDomain(unit) {
+  if (unit === "mg/mL" || unit === "µg/mL" || unit === "%") {
+    return "mass";
+  }
+
+  if (unit === "IU/mL") {
+    return "activity";
+  }
+
+  return null;
+}
+
+export function compatibleQuantityDomain(units) {
+  const domains = units.map((unit) => quantityUnitDomain(unit) || concentrationUnitDomain(unit));
+  const uniqueDomains = [...new Set(domains)];
+
+  return uniqueDomains.length === 1 ? uniqueDomains[0] : null;
+}
+
+export function toBaseQuantity(value, unit) {
+  if (quantityUnitDomain(unit) === "activity") {
+    return parseDecimal(value);
+  }
+
+  return toMg(value, unit);
+}
+
+export function formatQuantity(value, domain) {
+  if (domain === "activity") {
+    return `${formatNumber(value)} IU`;
+  }
+
+  return formatMassMg(value);
+}
+
+export function formatConcentration(value, domain) {
+  if (domain === "activity") {
+    return `${formatNumber(value)} IU/mL`;
+  }
+
+  return formatConcentrationMgPerMl(value);
+}
+
+export function quantityConversionTrace(value, fromUnit, domain, toUnit = "mg") {
+  if (domain === "activity") {
+    return null;
+  }
+
+  return massConversionTrace(value, fromUnit, toUnit);
+}
+
 export function concentrationConversionTrace(amount, amountUnit, volume, volumeUnit, toAmountUnit = "mg", toVolumeUnit = "mL") {
   const amountTrace = massConversionTrace(amount, amountUnit, toAmountUnit);
   const volumeTrace = volumeConversionTrace(volume, volumeUnit, toVolumeUnit);
@@ -93,6 +158,14 @@ export function directConcentrationToMgPerMl(value, unit) {
   return Number.NaN;
 }
 
+export function directConcentrationToBasePerMl(value, unit) {
+  if (concentrationUnitDomain(unit) === "activity") {
+    return parseDecimal(value);
+  }
+
+  return directConcentrationToMgPerMl(value, unit);
+}
+
 export function directConcentrationConversionTrace(value, unit) {
   const concentration = directConcentrationToMgPerMl(value, unit);
 
@@ -101,6 +174,14 @@ export function directConcentrationConversionTrace(value, unit) {
   }
 
   return `${formatNumber(value)} ${unit} = ${formatNumber(concentration)} mg/mL`;
+}
+
+export function directQuantityConcentrationConversionTrace(value, unit, domain) {
+  if (domain === "activity") {
+    return null;
+  }
+
+  return directConcentrationConversionTrace(value, unit);
 }
 
 export function formatNumber(value, maximumFractionDigits = 6) {

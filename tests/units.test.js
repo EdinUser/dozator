@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   concentrationConversionTrace,
+  compatibleQuantityDomain,
   concentrationToMgPerMl,
+  directConcentrationToBasePerMl,
   directConcentrationConversionTrace,
   directConcentrationToMgPerMl,
+  formatConcentration,
+  formatQuantity,
   formatConcentrationMgPerMl,
   formatMassMg,
   formatNumber,
@@ -52,6 +56,15 @@ describe("unit conversion", () => {
     expect(concentrationToMgPerMl("250", "µg", "5", "mL")).toBe(0.05);
     expect(directConcentrationToMgPerMl("500", "µg/mL")).toBe(0.5);
     expect(directConcentrationToMgPerMl("1", "%")).toBe(10);
+  });
+
+  it("keeps IU in a separate activity domain", () => {
+    expect(compatibleQuantityDomain(["IU", "IU/mL"])).toBe("activity");
+    expect(compatibleQuantityDomain(["mg", "µg/mL"])).toBe("mass");
+    expect(compatibleQuantityDomain(["IU", "µg/mL"])).toBeNull();
+    expect(directConcentrationToBasePerMl("5000", "IU/mL")).toBe(5000);
+    expect(formatQuantity(2500, "activity")).toBe("2500 IU");
+    expect(formatConcentration(5000, "activity")).toBe("5000 IU/mL");
   });
 
   it("creates explicit conversion traces", () => {

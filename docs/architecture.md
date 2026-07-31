@@ -27,10 +27,14 @@
 ## Вътрешни единици
 
 - Масата се свежда до `mg`.
+- Активността `IU` е отделен quantity domain и не се преобразува към маса.
 - Обемът се свежда до `mL`.
 - Времето за infusion volume/time се свежда до часове.
-- Концентрациите за текущите калкулатори се изчисляват като `mg/mL`.
+- Концентрациите за mass изчисления се изчисляват като `mg/mL`.
+- Концентрациите за activity изчисления се изчисляват като `IU/mL`.
 - Процентна концентрация се третира като w/v: `1% = 10 mg/mL`.
+- `IU` се поддържа в dose, dilution, reconstitution и в infusion dose-rate mode само за проста скорост `IU/h`. Infusion weight-based activity rates като `IU/kg/min` остават извън scope.
+- Отделният `iuConverter` калкулатор може да преобразува между `IU` и маса само когато потребителят въведе конкретното съотношение IU към маса, например `1 IU = 0.025 µg`.
 
 Поддържаните входни единици са ограничени нарочно. Не добавяйте лабораторни, household или prescribing единици без отделно UX и clinical validation решение.
 
@@ -62,8 +66,8 @@
 
 ## Hash Navigation
 
-- Екраните имат директни hash маршрути: `#dose`, `#dilution`, `#reconstitution`, `#infusion`, `#validation` и `#/documentation`.
-- Документацията има section маршрути `#/documentation/dose`, `#/documentation/dilution`, `#/documentation/reconstitution` и `#/documentation/infusion`.
+- Екраните имат директни hash маршрути: `#dose`, `#dilution`, `#reconstitution`, `#infusion`, `#iuConverter`, `#validation` и `#/documentation`.
+- Документацията има section маршрути `#/documentation/dose`, `#/documentation/dilution`, `#/documentation/reconstitution`, `#/documentation/infusion` и `#/documentation/iuConverter`.
 - Reload на тези URL-и трябва да оставя потребителя на същия екран.
 - `#calc=` е запазен само за QR/share restore payload и не трябва да се използва за обикновена навигация.
 
@@ -78,6 +82,8 @@ QR кодът е URL с hash payload. Няма server round-trip. `src/share/sha
 - проверете label output и history/template summary.
 
 Allowlist-ът включва `mode` и нужните числови полета за dilution и infusion tab-овете. Не добавяйте свободен текст извън вече ограничени полета като име на разтворител за етикет/подготовка.
+
+Прехвърлянето от IU converter използва тесен `carryForward` payload в нормалния result object. `IU -> mass` изпраща преобразуваната масова стойност към полето за назначена доза в dose калкулатора; `mass -> IU` изпраща преобразуваната `IU` стойност към същото поле и оставя unit locking поведението да наложи съвместими IU полета.
 
 ## PWA/Offline
 

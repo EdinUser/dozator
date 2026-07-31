@@ -30,6 +30,9 @@ npx playwright install chromium
 
 - Четирите калкулатора трябва да имат директни unit/golden тестове за формула, основен резултат, инструкции и проверка на сметката.
 - Преобразуванията `mg` към `µg`, `µg` към `mg`, `mL` към `L` и `L` към `mL` трябва да имат unit тестове.
+- IU support трябва да има unit тестове за activity domain, валидни IU сметки и отхвърляне на mixed `IU`/mass inputs.
+- E2E тестовете трябва да пазят UI locking поведението: при избор на `IU` свързаните quantity полета остават в `IU`; infusion позволява само проста скорост `IU/h`, без `IU/kg/*`.
+- IU converter тестовете трябва да покриват двете посоки (`IU -> mass` и `mass -> IU`), user-supplied relationship trace, QR/history restore и прехвърляне на резултат към подходящ калкулатор.
 - Нулеви, отрицателни, липсващи и невъзможни стойности трябва да връщат грешка към конкретното поле.
 - Restore от QR, история и шаблон трябва да преизчислява локално и да показва предупреждение за повторна проверка.
 - Калкулатори с табове трябва да имат тестове, че `mode` се пази и възстановява правилно от QR/history/templates.
@@ -39,8 +42,8 @@ npx playwright install chromium
 
 ## Какво Пази Всеки Test File
 
-- `tests/units.test.js`: decimal parser, leading/trailing zero formatting, mass/volume/time conversions и conversion trace strings.
-- `tests/calculators.test.js`: основни формули и warning behavior за calculator modules.
+- `tests/units.test.js`: decimal parser, leading/trailing zero formatting, mass/activity/volume/time conversions и conversion trace strings.
+- `tests/calculators.test.js`: основни формули, IU domain behavior и warning behavior за calculator modules.
 - `tests/calculation-guards.test.js`: невъзможни/подозрителни стойности, small volume warnings и high-alert warning.
 - `tests/calculator-golden.test.js`: точен contract за основните сценарии, включително `primary`, `instructions`, `traces`, `finalLines` и `label`.
 - `tests/regression-safety.test.js`: field-level error metadata, mixed-unit conversion regression и immutability на storage entries.

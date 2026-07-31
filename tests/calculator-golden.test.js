@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculateDilution } from "../src/calculators/dilution.js";
 import { calculateDose } from "../src/calculators/dose.js";
 import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
+import { calculateIuConverter } from "../src/calculators/iu-converter.js";
 import { calculateReconstitution } from "../src/calculators/reconstitution.js";
 
 describe("golden calculator scenarios", () => {
@@ -26,6 +27,28 @@ describe("golden calculator scenarios", () => {
         totalAmount: "125 mg",
         finalVolume: "2.5 mL",
         concentration: "50 mg/mL",
+      },
+    },
+    {
+      name: "IU dose from prepared solution",
+      calculate: calculateDose,
+      input: {
+        requiredDose: "2500",
+        requiredDoseUnit: "IU",
+        availableAmount: "10000",
+        availableAmountUnit: "IU",
+        availableVolume: "2",
+        availableVolumeUnit: "mL",
+        highAlert: false,
+      },
+      primary: "0.5 mL",
+      instructions: ["Изтеглете 0.5 mL от наличния разтвор.", "Обемът съдържа 2500 IU."],
+      traces: ["2500 IU ÷ 5000 IU/mL = 0.5 mL"],
+      finalLines: ["Назначена доза: 2500 IU"],
+      label: {
+        totalAmount: "2500 IU",
+        finalVolume: "0.5 mL",
+        concentration: "5000 IU/mL",
       },
     },
     {
@@ -166,6 +189,32 @@ describe("golden calculator scenarios", () => {
       },
     },
     {
+      name: "infusion IU dose per hour",
+      calculate: calculateInfusionDoseRate,
+      input: {
+        medicationAmount: "10000",
+        medicationAmountUnit: "IU",
+        finalVolume: "100",
+        finalVolumeUnit: "mL",
+        patientWeight: "",
+        patientWeightUnit: "kg",
+        prescribedRate: "500",
+        prescribedRateUnit: "IU/h",
+        hoursToRun: "",
+        hoursToRunUnit: "h",
+        highAlert: false,
+      },
+      primary: "5 mL/h",
+      instructions: ["Количество лекарство в 1 mL от инфузията: 100 IU/mL.", "Настройте помпата на 5 mL/h."],
+      traces: ["10000 IU ÷ 100 mL = 100 IU/mL", "500 IU/h ÷ 100 IU/mL = 5 mL/h"],
+      finalLines: ["Количество: 10000 IU", "Краен обем: 100 mL", "Обща дозова скорост: 500 IU/h"],
+      label: {
+        totalAmount: "10000 IU",
+        finalVolume: "100 mL",
+        concentration: "100 IU/mL",
+      },
+    },
+    {
       name: "infusion weight-based dose per minute",
       calculate: calculateInfusionDoseRate,
       input: {
@@ -207,6 +256,32 @@ describe("golden calculator scenarios", () => {
       label: {
         totalAmount: "",
         finalVolume: "500 mL",
+        concentration: "",
+      },
+    },
+    {
+      name: "IU to mass converter",
+      calculate: calculateIuConverter,
+      input: {
+        mode: "iuToMass",
+        relationshipIu: "1",
+        relationshipIuUnit: "IU",
+        relationshipMass: "0.025",
+        relationshipMassUnit: "µg",
+        amountToConvert: "2000",
+        amountToConvertUnit: "IU",
+        resultMassUnit: "µg",
+      },
+      primary: "50 µg",
+      instructions: [
+        "Преобразуван резултат: 50 µg.",
+        "Проверете въведеното съотношение спрямо документацията на продукта или друг доверен източник.",
+      ],
+      traces: ["1 IU = 0.025 µg = 0.000025 mg/IU", "2000 IU × 0.000025 mg/IU = 50 µg"],
+      finalLines: ["Използвано съотношение: 1 IU = 0.025 µg", "Преобразувано количество: 2000 IU"],
+      label: {
+        totalAmount: "50 µg",
+        finalVolume: "",
         concentration: "",
       },
     },
