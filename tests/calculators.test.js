@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculateDilution } from "../src/calculators/dilution.js";
 import { calculateDose } from "../src/calculators/dose.js";
 import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "../src/calculators/infusion.js";
+import { calculateIuConverter } from "../src/calculators/iu-converter.js";
 import { calculateReconstitution } from "../src/calculators/reconstitution.js";
 
 describe("dose calculator", () => {
@@ -65,6 +66,40 @@ describe("dose calculator", () => {
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("0.25 mL");
     expect(result.notices).toContain("250 µg = 0.25 mg");
+  });
+
+  it("calculates volume from an IU-based prepared solution", () => {
+    const result = calculateDose({
+      requiredDose: "2500",
+      requiredDoseUnit: "IU",
+      availableAmount: "10000",
+      availableAmountUnit: "IU",
+      availableVolume: "2",
+      availableVolumeUnit: "mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("0.5 mL");
+    expect(result.traces).toEqual(["2500 IU ÷ 5000 IU/mL = 0.5 mL"]);
+    expect(result.notices).toEqual([]);
+    expect(result.label.concentration).toBe("5000 IU/mL");
+  });
+
+  it("rejects mixed IU and mass dose units", () => {
+    const result = calculateDose({
+      requiredDose: "250",
+      requiredDoseUnit: "µg",
+      availableAmount: "5000",
+      availableAmountUnit: "IU",
+      availableVolume: "1",
+      availableVolumeUnit: "mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain("IU и масови единици не могат да се смесват в едно изчисление.");
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["requiredDoseUnit", "availableAmountUnit"]);
   });
 });
 
@@ -188,6 +223,59 @@ describe("dilution calculator", () => {
       "25 mL - 5 mL = 20 mL",
     ]);
   });
+
+  it("calculates final volume from an IU amount", () => {
+    const result = calculateDilution({
+      availableAmount: "10000",
+      availableAmountUnit: "IU",
+      availableVolume: "2",
+      availableVolumeUnit: "mL",
+      targetConcentration: "1000",
+      targetConcentrationUnit: "IU/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.instructions).toContain("Крайно количество в 1 mL: 1000 IU/mL.");
+    expect(result.traces).toEqual(["10000 IU ÷ 2 mL = 5000 IU/mL", "10000 IU ÷ 1000 IU/mL = 10 mL"]);
+  });
+
+  it("rejects mixed IU amount and mass target concentration", () => {
+    const result = calculateDilution({
+      availableAmount: "10000",
+      availableAmountUnit: "IU",
+      availableVolume: "2",
+      availableVolumeUnit: "mL",
+      targetConcentration: "1",
+      targetConcentrationUnit: "mg/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["availableAmountUnit", "targetConcentrationUnit"]);
+  });
+
+  it("dilutes from an IU concentration to a lower IU concentration", () => {
+    const result = calculateDilution({
+      mode: "concentration",
+      sourceConcentration: "5000",
+      sourceConcentrationUnit: "IU/mL",
+      sourceVolume: "2",
+      sourceVolumeUnit: "mL",
+      targetConcentration: "1000",
+      targetConcentrationUnit: "IU/mL",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("10 mL");
+    expect(result.traces).toEqual([
+      "5000 IU/mL × 2 mL = 10000 IU",
+      "10000 IU ÷ 1000 IU/mL = 10 mL",
+      "10 mL - 2 mL = 8 mL",
+    ]);
+  });
 });
 
 describe("reconstitution calculator", () => {
@@ -228,6 +316,46 @@ describe("reconstitution calculator", () => {
     expect(result.primary).toBe("10 mL");
     expect(result.instructions).toContain("Необходим краен обем след разтваряне: 10 mL.");
     expect(result.instructions).toContain("Проверете в инструкцията дали добавеният разтворител е равен на крайния обем.");
+  });
+
+  it("calculates reconstitution and withdrawal in IU", () => {
+    const result = calculateReconstitution({
+      vialAmount: "10000",
+      vialAmountUnit: "IU",
+      diluentVolume: "2",
+      diluentVolumeUnit: "mL",
+      finalVolume: "2",
+      finalVolumeUnit: "mL",
+      targetConcentration: "",
+      targetConcentrationUnit: "IU/mL",
+      requiredDose: "2500",
+      requiredDoseUnit: "IU",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("0.5 mL");
+    expect(result.finalLines).toContain("Количество в 1 mL: 5000 IU/mL");
+    expect(result.traces).toEqual(["10000 IU ÷ 2 mL = 5000 IU/mL", "2500 IU ÷ 5000 IU/mL = 0.5 mL"]);
+  });
+
+  it("rejects mixed IU vial amount and mass withdrawal dose", () => {
+    const result = calculateReconstitution({
+      vialAmount: "10000",
+      vialAmountUnit: "IU",
+      diluentVolume: "",
+      diluentVolumeUnit: "mL",
+      finalVolume: "2",
+      finalVolumeUnit: "mL",
+      targetConcentration: "",
+      targetConcentrationUnit: "IU/mL",
+      requiredDose: "250",
+      requiredDoseUnit: "µg",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["vialAmountUnit", "requiredDoseUnit"]);
   });
 });
 
@@ -272,6 +400,48 @@ describe("infusion calculators", () => {
 
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("12.5 mL/h");
+  });
+
+  it("calculates pump rate from IU amount and IU per hour", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "10000",
+      medicationAmountUnit: "IU",
+      finalVolume: "100",
+      finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
+      prescribedRate: "500",
+      prescribedRateUnit: "IU/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("5 mL/h");
+    expect(result.instructions).toContain("Количество лекарство в 1 mL от инфузията: 100 IU/mL.");
+    expect(result.traces).toEqual(["10000 IU ÷ 100 mL = 100 IU/mL", "500 IU/h ÷ 100 IU/mL = 5 mL/h"]);
+    expect(result.finalLines).toContain("Обща дозова скорост: 500 IU/h");
+    expect(result.label.concentration).toBe("100 IU/mL");
+  });
+
+  it("rejects mixed IU medication amount and mass prescribed rate", () => {
+    const result = calculateInfusionDoseRate({
+      medicationAmount: "10000",
+      medicationAmountUnit: "IU",
+      finalVolume: "100",
+      finalVolumeUnit: "mL",
+      patientWeight: "",
+      patientWeightUnit: "kg",
+      prescribedRate: "25",
+      prescribedRateUnit: "mg/h",
+      hoursToRun: "",
+      hoursToRunUnit: "h",
+      highAlert: false,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["medicationAmountUnit", "prescribedRateUnit"]);
   });
 
   it("calculates pump rate from weight-based microgram per minute dose", () => {
@@ -346,5 +516,75 @@ describe("infusion calculators", () => {
 
     expect(result.ok).toBe(true);
     expect(result.primary).toBe("125 mL/h");
+  });
+});
+
+describe("IU converter", () => {
+  it("converts IU to the selected mass unit from a user-supplied relationship", () => {
+    const result = calculateIuConverter({
+      mode: "iuToMass",
+      relationshipIu: "1",
+      relationshipIuUnit: "IU",
+      relationshipMass: "0.025",
+      relationshipMassUnit: "µg",
+      amountToConvert: "2000",
+      amountToConvertUnit: "IU",
+      resultMassUnit: "µg",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("50 µg");
+    expect(result.traces).toEqual([
+      "1 IU = 0.025 µg = 0.000025 mg/IU",
+      "2000 IU × 0.000025 mg/IU = 50 µg",
+    ]);
+    expect(result.carryForward).toEqual({
+      targetCalculator: "dose",
+      values: {
+        requiredDose: "50",
+        requiredDoseUnit: "µg",
+      },
+    });
+  });
+
+  it("converts mass to IU from a user-supplied relationship", () => {
+    const result = calculateIuConverter({
+      mode: "massToIu",
+      relationshipIu: "1",
+      relationshipIuUnit: "IU",
+      relationshipMass: "0.025",
+      relationshipMassUnit: "µg",
+      amountToConvert: "50",
+      amountToConvertUnit: "µg",
+      resultMassUnit: "µg",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.primary).toBe("2000 IU");
+    expect(result.traces).toEqual([
+      "1 IU = 0.025 µg = 0.000025 mg/IU",
+      "50 µg = 0.05 mg",
+      "0.05 mg ÷ 0.000025 mg/IU = 2000 IU",
+    ]);
+    expect(result.carryForward.values).toEqual({
+      requiredDose: "2000",
+      requiredDoseUnit: "IU",
+    });
+  });
+
+  it("rejects missing relationship values", () => {
+    const result = calculateIuConverter({
+      mode: "iuToMass",
+      relationshipIu: "",
+      relationshipIuUnit: "IU",
+      relationshipMass: "0.025",
+      relationshipMassUnit: "µg",
+      amountToConvert: "2000",
+      amountToConvertUnit: "IU",
+      resultMassUnit: "µg",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors.map((field) => field.name)).toEqual(["relationshipIu"]);
   });
 });

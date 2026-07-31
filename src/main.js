@@ -6,6 +6,7 @@ import { calculateDose } from "./calculators/dose.js";
 import { calculateDilution } from "./calculators/dilution.js";
 import { calculateReconstitution } from "./calculators/reconstitution.js";
 import { calculateInfusionDoseRate, calculateInfusionMedicationAmount, calculateInfusionVolumeTime } from "./calculators/infusion.js";
+import { calculateIuConverter } from "./calculators/iu-converter.js";
 import {
   labelText,
   renderAcknowledgement,
@@ -76,6 +77,12 @@ const calculators = {
     render: "infusion",
     calculate: calculateInfusion,
   },
+  iuConverter: {
+    title: bg.calculators.iuConverter.title,
+    subtitle: bg.calculators.iuConverter.subtitle,
+    render: "iuConverter",
+    calculate: calculateIuConverter,
+  },
 };
 
 registerServiceWorker();
@@ -139,32 +146,38 @@ function renderApp() {
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="${bg.actions.close}"></button>
       </div>
       <div class="offcanvas-body">
-        <div class="menu-section-title">${bg.menu.calculators}</div>
-        <div class="menu-list">
-          ${renderMenuItems()}
-        </div>
-        <div class="menu-placeholder mt-4">
+        <section class="menu-section">
+          <div class="menu-section-title">${bg.menu.calculators}</div>
+          <div class="menu-list list-group list-group-flush">
+            ${renderMenuItems()}
+          </div>
+        </section>
+        <section class="menu-section">
           <div class="menu-section-title">${bg.menu.memory}</div>
-          <button class="menu-item" type="button" data-action="show-history">
-            <span>${bg.actions.history}</span>
-            <small>${bg.menu.historyDescription}</small>
-          </button>
-          <button class="menu-item" type="button" data-action="show-favorites">
-            <span>${bg.menu.savedTitle}</span>
-            <small>${bg.menu.savedDescription}</small>
-          </button>
-        </div>
-        <div class="menu-placeholder mt-4">
+          <div class="menu-list list-group list-group-flush">
+            <button class="menu-item list-group-item list-group-item-action" type="button" data-action="show-history">
+              <span>${bg.actions.history}</span>
+              <small>${bg.menu.historyDescription}</small>
+            </button>
+            <button class="menu-item list-group-item list-group-item-action" type="button" data-action="show-favorites">
+              <span>${bg.menu.savedTitle}</span>
+              <small>${bg.menu.savedDescription}</small>
+            </button>
+          </div>
+        </section>
+        <section class="menu-section">
           <div class="menu-section-title">${bg.menu.safetyAndValidation}</div>
-          <button class="menu-item" type="button" data-action="show-documentation">
-            <span>${bg.menu.documentationTitle}</span>
-            <small>${bg.menu.documentationDescription}</small>
-          </button>
-          <button class="menu-item" type="button" data-action="show-clinical-validation">
-            <span>${bg.menu.validationTitle}</span>
-            <small>${bg.menu.validationDescription}</small>
-          </button>
-        </div>
+          <div class="menu-list list-group list-group-flush">
+            <button class="menu-item list-group-item list-group-item-action" type="button" data-action="show-documentation">
+              <span>${bg.menu.documentationTitle}</span>
+              <small>${bg.menu.documentationDescription}</small>
+            </button>
+            <button class="menu-item list-group-item list-group-item-action" type="button" data-action="show-clinical-validation">
+              <span>${bg.menu.validationTitle}</span>
+              <small>${bg.menu.validationDescription}</small>
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   `;
@@ -256,6 +269,7 @@ function handleClick(event) {
     document.querySelector("[data-input-summary]")?.remove();
     const form = document.querySelector("[data-form]");
     form?.classList.remove("is-collapsed");
+    syncQuantityUnitLocks();
     return;
   }
 
@@ -271,6 +285,11 @@ function handleClick(event) {
 
   if (action === "continue-infusion-dose-rate" && lastResult?.carryForward?.targetMode === "doseRate") {
     continueInfusionDoseRate();
+    return;
+  }
+
+  if (action === "use-converter-result" && lastResult?.carryForward?.targetCalculator) {
+    useConverterResult();
     return;
   }
 
@@ -376,6 +395,11 @@ function handleFavoriteSubmit(event) {
 function handleChange(event) {
   if (event.target.matches("[name='mode']")) {
     updateModePanels(event.target.value);
+    syncQuantityUnitLocks();
+  }
+
+  if (event.target.matches("[data-quantity-lock]")) {
+    syncQuantityUnitLocks(event.target);
   }
 }
 
@@ -421,6 +445,7 @@ function renderCalculator(key) {
   document.querySelector("#screen").innerHTML = renderCalculatorScreen({ ...calculators[key], key });
   restoreCalculatorDraft(key);
   syncActiveModePanel();
+  syncQuantityUnitLocks();
 }
 
 function renderClinicalValidation() {
@@ -613,7 +638,7 @@ function calculatorTitles() {
 function loadCalculation(calculator, values, options = {}) {
   activeCalculator = calculator;
   renderCalculator(calculator);
-  restoreFormValues(values);
+  restoreFormValues(values, { syncLocks: false });
 
   const result = calculators[calculator].calculate(values);
   lastResult = result.ok ? result : null;
@@ -641,7 +666,7 @@ function loadSharedCalculation() {
   return true;
 }
 
-function restoreFormValues(values) {
+function restoreFormValues(values, options = {}) {
   if (values.mode) {
     const modeField = document.querySelector(`[name="mode"][value="${values.mode}"]`);
 
@@ -678,6 +703,10 @@ function restoreFormValues(values) {
   if (mode) {
     updateModePanels(mode);
   }
+
+  if (options.syncLocks !== false) {
+    syncQuantityUnitLocks();
+  }
 }
 
 function syncActiveModePanel() {
@@ -686,6 +715,77 @@ function syncActiveModePanel() {
   if (mode) {
     updateModePanels(mode);
   }
+}
+
+function syncQuantityUnitLocks(changedSelect = null) {
+  const form = document.querySelector("[data-form]");
+
+  if (!form) {
+    return;
+  }
+
+  const selects = [...form.querySelectorAll("[data-quantity-lock]")].filter((select) => !select.disabled);
+  const groups = new Set(selects.flatMap((select) => lockGroups(select)));
+
+  groups.forEach((group) => {
+    const groupSelects = selects.filter((select) => lockGroups(select).includes(group));
+
+    if (!groupSelects.length) {
+      return;
+    }
+
+    const source = changedSelect && groupSelects.includes(changedSelect) ? changedSelect : groupSelects[0];
+    const domain = unitDomain(source.value) === "activity" ? "activity" : "mass";
+
+    groupSelects.forEach((select) => {
+      const isSource = select === source;
+
+      if (domain === "activity" && !isSource) {
+        setSelectUnit(select, "IU", "activity");
+      } else if (domain === "mass" && !isSource && unitDomain(select.value) === "activity") {
+        setSelectUnit(select, firstUnitForDomain(select, "mass"), "mass");
+      }
+
+      lockSelectOptions(select, domain, isSource);
+    });
+  });
+}
+
+function lockGroups(select) {
+  return (select.dataset.quantityLock || "").split(/\s+/).filter(Boolean);
+}
+
+function lockSelectOptions(select, domain, isSource) {
+  [...select.options].forEach((option) => {
+    const optionDomain = unitDomain(option.value);
+    option.disabled = !isSource && optionDomain && optionDomain !== domain;
+  });
+}
+
+function setSelectUnit(select, unit, domain) {
+  if ([...select.options].some((option) => option.value === unit)) {
+    select.value = unit;
+    return;
+  }
+
+  select.value = firstUnitForDomain(select, domain);
+}
+
+function firstUnitForDomain(select, domain) {
+  const option = [...select.options].find((item) => unitDomain(item.value) === domain);
+  return option?.value || select.value;
+}
+
+function unitDomain(unit) {
+  if (unit === "IU" || unit === "IU/mL" || unit === "IU/h") {
+    return "activity";
+  }
+
+  if (["g", "mg", "µg", "mg/mL", "µg/mL", "%", "mg/h", "µg/h", "mg/kg/h", "µg/kg/h", "mg/kg/min", "µg/kg/min"].includes(unit)) {
+    return "mass";
+  }
+
+  return null;
 }
 
 function storeCurrentCalculatorDraft() {
@@ -768,6 +868,22 @@ function continueInfusionDoseRate() {
   document.querySelector("#medicationAmount")?.focus();
 }
 
+function useConverterResult() {
+  const carryForward = lastResult?.carryForward;
+
+  if (!carryForward?.targetCalculator || !calculators[carryForward.targetCalculator]) {
+    return;
+  }
+
+  const values = carryForward.values || {};
+
+  lastResult = null;
+  lastSubmittedValues = null;
+  calculatorDrafts[carryForward.targetCalculator] = values;
+  skipNextDraftStore = true;
+  navigateToRoute(carryForward.targetCalculator);
+}
+
 function clearFieldErrors(form) {
   form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
     clearFieldError(field);
@@ -794,7 +910,7 @@ function clearFieldError(field) {
     field.removeAttribute("aria-describedby");
   }
 
-  const error = document.querySelector(`#${field.name}Error`);
+  const error = field.closest(".field-row")?.querySelector(".field-error") || document.querySelector(`#${field.name}Error`);
   error?.closest(".field-row")?.classList.remove("has-error");
 
   if (error) {
@@ -804,8 +920,8 @@ function clearFieldError(field) {
 
 function applyFieldErrors(form, fieldErrors) {
   fieldErrors.forEach((fieldError) => {
-    const field = form.querySelector(`[name="${fieldError.name}"]`);
-    const error = form.querySelector(`#${fieldError.name}Error`);
+    const field = form.querySelector(`[name="${fieldError.name}"]:not(:disabled)`) || form.querySelector(`[name="${fieldError.name}"]`);
+    const error = field?.closest(".field-row")?.querySelector(".field-error") || form.querySelector(`#${fieldError.name}Error`);
 
     if (!field || !error) {
       return;

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Add IU as a separate activity quantity domain for supported dose, dilution, reconstitution, and simple infusion dose-rate calculations.
+- Enforce mass/IU compatibility with linked unit locking and calculator-level validation.
+- Add a dedicated IU-to-mass converter using a user-supplied IU-to-mass ratio, with result transfer into the dose calculator.
+- Add IU converter QR/share restore, history summaries, in-app documentation, and screenshot coverage.
+- Refresh clinical validation, architecture, testing docs, and automated coverage for IU workflows.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.5.0
 
 - Add dilution tabs for amount-based dilution and concentration-to-concentration dilution.

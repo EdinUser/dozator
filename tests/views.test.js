@@ -32,6 +32,22 @@ describe("calculator views", () => {
     expect(html).toContain("data-mode-panel=\"concentration\"");
   });
 
+  it("renders IU converter as a bidirectional calculator", () => {
+    const html = renderCalculatorScreen({
+      title: bg.calculators.iuConverter.title,
+      subtitle: bg.calculators.iuConverter.subtitle,
+      render: "iuConverter",
+    });
+
+    expect(html).toContain("IU към маса");
+    expect(html).toContain("Маса към IU");
+    expect(html).toContain("data-mode-panel=\"iuToMass\"");
+    expect(html).toContain("data-mode-panel=\"massToIu\"");
+    expect(html).toContain("name=\"relationshipIu\"");
+    expect(html).toContain("name=\"relationshipMass\"");
+    expect(html).toContain("name=\"resultMassUnit\"");
+  });
+
   it("renders forms with custom validation targets", () => {
     const html = renderCalculatorScreen({
       title: bg.calculators.dose.title,
@@ -44,6 +60,27 @@ describe("calculator views", () => {
     expect(html).toContain("class=\"invalid-feedback field-error\"");
     expect(html).toContain("placeholder=\"въведете доза\"");
     expect(html).not.toContain("value=\"125\"");
+  });
+
+  it("offers IU only in supported calculator quantity fields", () => {
+    const dose = renderCalculatorScreen({
+      title: bg.calculators.dose.title,
+      subtitle: bg.calculators.dose.subtitle,
+      render: "dose",
+    });
+    const infusion = renderCalculatorScreen({
+      title: bg.calculators.infusion.title,
+      subtitle: bg.calculators.infusion.subtitle,
+      render: "infusion",
+    });
+
+    expect(dose).toContain("value=\"IU\"");
+    expect(dose).toContain("data-quantity-lock=\"dose-quantity\"");
+    expect(infusion).toContain("value=\"IU\"");
+    expect(infusion).toContain("value=\"IU/h\"");
+    expect(infusion).toContain("data-quantity-lock=\"infusion-dose-rate\"");
+    expect(infusion).not.toContain("value=\"IU/mL\"");
+    expect(infusion).not.toContain("value=\"IU/kg/min\"");
   });
 
   it("renders validation summary for current calculator formulas", () => {
@@ -97,5 +134,26 @@ describe("calculator views", () => {
     expect(error).toContain("role=\"alert\"");
     expect(error).toContain("aria-label=\"Грешки в изчислението\"");
     expect(error).toContain("data-result-panel");
+  });
+
+  it("renders converter result transfer action", () => {
+    const html = renderResultPanel({
+      ok: true,
+      primary: "50 µg",
+      warnings: [],
+      notices: [],
+      instructions: ["Преобразуван резултат: 50 µg."],
+      traces: ["2000 IU × 0.000025 mg/IU = 50 µg"],
+      carryForward: {
+        targetCalculator: "dose",
+        values: {
+          requiredDose: "50",
+          requiredDoseUnit: "µg",
+        },
+      },
+    });
+
+    expect(html).toContain("data-action=\"use-converter-result\"");
+    expect(html).toContain("Използвай в калкулатор");
   });
 });

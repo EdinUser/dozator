@@ -12,6 +12,7 @@ export function renderHomeScreen() {
         ${homeButton("dilution", bg.calculators.dilution.title, bg.calculators.dilution.homeDescription)}
         ${homeButton("reconstitution", bg.calculators.reconstitution.title, bg.calculators.reconstitution.homeDescription)}
         ${homeButton("infusion", bg.calculators.infusion.title, bg.calculators.infusion.homeDescription)}
+        ${homeButton("iuConverter", bg.calculators.iuConverter.title, bg.calculators.iuConverter.homeDescription)}
       </div>
     </section>
   `;
@@ -23,6 +24,7 @@ export function renderMenuItems() {
     ${menuButton("dilution", bg.calculators.dilution.title, bg.calculators.dilution.menuDescription)}
     ${menuButton("reconstitution", bg.calculators.reconstitution.title, bg.calculators.reconstitution.menuDescription)}
     ${menuButton("infusion", bg.calculators.infusion.title, bg.calculators.infusion.menuDescription)}
+    ${menuButton("iuConverter", bg.calculators.iuConverter.title, bg.calculators.iuConverter.menuDescription)}
   `;
 }
 
@@ -284,6 +286,7 @@ export function renderResultPanel(result) {
       <div class="result-actions">
         <button type="button" class="btn btn-outline-secondary btn-lg" data-action="start-over">${bg.actions.newCalculation}</button>
         ${result.carryForward?.targetMode === "doseRate" ? `<button type="button" class="btn btn-lg continue-action-button" data-action="continue-infusion-dose-rate">${bg.actions.continueToDoseRate}</button>` : ""}
+        ${result.carryForward?.targetCalculator ? `<button type="button" class="btn btn-lg continue-action-button" data-action="use-converter-result">${bg.actions.useInCalculator}</button>` : ""}
         <button type="button" class="btn btn-outline-primary btn-lg" data-action="share-calculation">${bg.actions.shareQr}</button>
         <button type="button" class="btn btn-outline-primary btn-lg" data-action="save-favorite">${bg.actions.save}</button>
         <button type="button" class="btn btn-primary btn-lg" data-action="create-label">${bg.actions.createLabel}</button>
@@ -572,6 +575,7 @@ const formTemplates = {
   dilution: renderDilutionForm,
   reconstitution: renderReconstitutionForm,
   infusion: renderInfusionForm,
+  iuConverter: renderIuConverterForm,
 };
 
 function renderDoseForm() {
@@ -579,11 +583,11 @@ function renderDoseForm() {
     <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.dose.prescribedDose}</legend>
-        ${numberWithUnit("requiredDose", bg.forms.dose.dose, bg.forms.common.dosePlaceholder, ["g", "mg", "µg"], "mg")}
+        ${numberWithUnit("requiredDose", bg.forms.dose.dose, bg.forms.common.dosePlaceholder, ["g", "mg", "µg", "IU"], "mg", true, "dose-quantity")}
       </fieldset>
       <fieldset>
         <legend>${bg.forms.dose.availableSolution}</legend>
-        ${numberWithUnit("availableAmount", bg.forms.dose.amount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
+        ${numberWithUnit("availableAmount", bg.forms.dose.amount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg", "IU"], "mg", true, "dose-quantity")}
         ${numberWithUnit("availableVolume", bg.forms.dose.inVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL")}
       </fieldset>
       ${highAlertToggle()}
@@ -613,20 +617,20 @@ function renderDilutionForm() {
       <div data-mode-panel="amount">
         <fieldset>
           <legend>${bg.forms.dilution.container}</legend>
-          ${numberWithUnit("availableAmount", bg.forms.dilution.containerAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
+          ${numberWithUnit("availableAmount", bg.forms.dilution.containerAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg", "IU"], "mg", true, "dilution-amount")}
           ${numberWithUnit("availableVolume", bg.forms.dilution.containerVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL", false)}
         </fieldset>
       </div>
       <div data-mode-panel="concentration" hidden>
         <fieldset>
           <legend>${bg.forms.dilution.sourceSolution}</legend>
-          ${concentrationField("sourceConcentration", bg.forms.dilution.sourceConcentration, bg.forms.common.amountPerMlPlaceholder, "%")}
+          ${concentrationField("sourceConcentration", bg.forms.dilution.sourceConcentration, bg.forms.common.amountPerMlPlaceholder, "%", true, "dilution-concentration")}
           ${numberWithUnit("sourceVolume", bg.forms.dilution.sourceVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL")}
         </fieldset>
       </div>
       <fieldset>
         <legend>${bg.forms.dilution.target}</legend>
-        ${concentrationField("targetConcentration", bg.forms.dilution.targetAmountPerMl, bg.forms.common.amountPerMlPlaceholder, "mg/mL")}
+        ${concentrationField("targetConcentration", bg.forms.dilution.targetAmountPerMl, bg.forms.common.amountPerMlPlaceholder, "mg/mL", true, "dilution-amount dilution-concentration")}
       </fieldset>
       ${diluentField()}
       ${highAlertToggle()}
@@ -640,17 +644,17 @@ function renderReconstitutionForm() {
     <form class="calculator-form" data-form novalidate>
       <fieldset>
         <legend>${bg.forms.reconstitution.vial}</legend>
-        ${numberWithUnit("vialAmount", bg.forms.reconstitution.vialAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "g")}
+        ${numberWithUnit("vialAmount", bg.forms.reconstitution.vialAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg", "IU"], "g", true, "reconstitution-quantity")}
       </fieldset>
       <fieldset>
         <legend>${bg.forms.reconstitution.powderDissolving}</legend>
         ${numberWithUnit("diluentVolume", bg.forms.reconstitution.diluentVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL", false)}
         ${numberWithUnit("finalVolume", bg.forms.reconstitution.finalVolumeAfterDissolving, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL", false)}
-        ${concentrationField("targetConcentration", bg.forms.reconstitution.targetAmountPerMl, bg.forms.common.amountPerMlPlaceholder, "mg/mL", false)}
+        ${concentrationField("targetConcentration", bg.forms.reconstitution.targetAmountPerMl, bg.forms.common.amountPerMlPlaceholder, "mg/mL", false, "reconstitution-quantity")}
       </fieldset>
       <fieldset>
         <legend>${bg.forms.reconstitution.optionalDose}</legend>
-        ${numberWithUnit("requiredDose", bg.forms.reconstitution.doseToWithdraw, bg.forms.common.dosePlaceholder, ["g", "mg", "µg"], "mg", false)}
+        ${numberWithUnit("requiredDose", bg.forms.reconstitution.doseToWithdraw, bg.forms.common.dosePlaceholder, ["g", "mg", "µg", "IU"], "mg", false, "reconstitution-quantity")}
       </fieldset>
       ${diluentField()}
       ${highAlertToggle()}
@@ -692,10 +696,10 @@ function renderInfusionForm() {
       <div data-mode-panel="doseRate" hidden>
         <fieldset>
           <legend>${bg.forms.infusion.infusion}</legend>
-          ${numberWithUnit("medicationAmount", bg.forms.infusion.medicationAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "mg")}
+          ${numberWithUnit("medicationAmount", bg.forms.infusion.medicationAmount, bg.forms.common.amountPlaceholder, ["g", "mg", "µg", "IU"], "mg", true, "infusion-dose-rate")}
           ${numberWithUnit("finalVolume", bg.forms.infusion.finalVolume, bg.forms.common.volumePlaceholder, ["L", "mL"], "mL")}
           ${numberWithUnit("patientWeight", bg.forms.infusion.patientWeight, bg.forms.common.weightPlaceholder, ["kg"], "kg", false)}
-          ${numberWithUnit("prescribedRate", bg.forms.infusion.prescribedRate, bg.forms.common.ratePlaceholder, ["mg/h", "µg/h", "mg/kg/h", "µg/kg/h", "mg/kg/min", "µg/kg/min"], "mg/h")}
+          ${numberWithUnit("prescribedRate", bg.forms.infusion.prescribedRate, bg.forms.common.ratePlaceholder, ["mg/h", "µg/h", "IU/h", "mg/kg/h", "µg/kg/h", "mg/kg/min", "µg/kg/min"], "mg/h", true, "infusion-dose-rate")}
           ${numberWithUnit("hoursToRun", bg.forms.infusion.hoursToRun, bg.forms.common.hoursPlaceholder, ["h"], "h", false)}
         </fieldset>
       </div>
@@ -712,6 +716,47 @@ function renderInfusionForm() {
   `;
 }
 
+function renderIuConverterForm() {
+  return `
+    <form class="calculator-form" data-form novalidate>
+      <fieldset>
+        <legend>${bg.forms.iuConverter.mode}</legend>
+        <div class="calculator-mode-options" role="radiogroup" aria-label="${bg.forms.iuConverter.modeAriaLabel}">
+          <input class="btn-check" type="radio" name="mode" id="mode-iu-to-mass" value="iuToMass" checked>
+          <label class="calculator-mode-option" for="mode-iu-to-mass">
+            <strong>${bg.forms.iuConverter.iuToMassMode}</strong>
+            <small>${bg.forms.iuConverter.iuToMassDescription}</small>
+          </label>
+          <input class="btn-check" type="radio" name="mode" id="mode-mass-to-iu" value="massToIu">
+          <label class="calculator-mode-option" for="mode-mass-to-iu">
+            <strong>${bg.forms.iuConverter.massToIuMode}</strong>
+            <small>${bg.forms.iuConverter.massToIuDescription}</small>
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>${bg.forms.iuConverter.relationship}</legend>
+        ${numberWithUnit("relationshipIu", bg.forms.iuConverter.relationshipIu, bg.forms.common.relationshipIuPlaceholder, ["IU"], "IU")}
+        ${numberWithUnit("relationshipMass", bg.forms.iuConverter.relationshipMass, bg.forms.common.relationshipMassPlaceholder, ["g", "mg", "µg"], "µg")}
+      </fieldset>
+      <div data-mode-panel="iuToMass">
+        <fieldset>
+          <legend>${bg.forms.iuConverter.amount}</legend>
+          ${numberWithUnit("amountToConvert", bg.forms.iuConverter.amountIu, bg.forms.common.amountPlaceholder, ["IU"], "IU")}
+          ${unitOnly("resultMassUnit", bg.forms.iuConverter.resultUnit, ["g", "mg", "µg"], "µg")}
+        </fieldset>
+      </div>
+      <div data-mode-panel="massToIu" hidden>
+        <fieldset>
+          <legend>${bg.forms.iuConverter.amount}</legend>
+          ${numberWithUnit("amountToConvert", bg.forms.iuConverter.amountMass, bg.forms.common.amountPlaceholder, ["g", "mg", "µg"], "µg", true, "", "amountToConvertMass")}
+        </fieldset>
+      </div>
+      ${submitButton()}
+    </form>
+  `;
+}
+
 function homeButton(key, title, text) {
   return `
     <button class="main-action" type="button" data-calculator="${key}">
@@ -721,20 +766,32 @@ function homeButton(key, title, text) {
   `;
 }
 
-function concentrationField(name, label, placeholder, selectedUnit, required = true) {
-  return numberWithUnit(name, label, placeholder, ["mg/mL", "µg/mL", "%"], selectedUnit, required);
+function concentrationField(name, label, placeholder, selectedUnit, required = true, lockGroup = "") {
+  return numberWithUnit(name, label, placeholder, ["mg/mL", "µg/mL", "IU/mL", "%"], selectedUnit, required, lockGroup);
 }
 
-function numberWithUnit(name, label, placeholder, units, selectedUnit, required = true) {
+function numberWithUnit(name, label, placeholder, units, selectedUnit, required = true, lockGroup = "", id = name) {
   return `
     <div class="field-row">
-      <label class="form-label" for="${name}">${label}</label>
+      <label class="form-label" for="${id}">${label}</label>
       <div class="input-group input-group-lg">
-        <input class="form-control" id="${name}" name="${name}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([\\.,][0-9]+)?" placeholder="${placeholder}" ${required ? "required" : ""}>
-        <select class="form-select unit-select" name="${name}Unit" aria-label="${bg.forms.common.unitAriaLabel(label)}">
+        <input class="form-control" id="${id}" name="${name}" type="text" inputmode="decimal" autocomplete="off" pattern="[0-9]+([\\.,][0-9]+)?" placeholder="${placeholder}" ${required ? "required" : ""}>
+        <select class="form-select unit-select" name="${name}Unit" aria-label="${bg.forms.common.unitAriaLabel(label)}" ${lockGroup ? `data-quantity-lock="${lockGroup}"` : ""}>
           ${units.map((unit) => `<option value="${unit}" ${unit === selectedUnit ? "selected" : ""}>${unit}</option>`).join("")}
         </select>
       </div>
+      <div class="invalid-feedback field-error" id="${id}Error"></div>
+    </div>
+  `;
+}
+
+function unitOnly(name, label, units, selectedUnit) {
+  return `
+    <div class="field-row">
+      <label class="form-label" for="${name}">${label}</label>
+      <select class="form-select form-select-lg unit-select" id="${name}" name="${name}" aria-label="${bg.forms.common.unitAriaLabel(label)}">
+        ${units.map((unit) => `<option value="${unit}" ${unit === selectedUnit ? "selected" : ""}>${unit}</option>`).join("")}
+      </select>
       <div class="invalid-feedback field-error" id="${name}Error"></div>
     </div>
   `;
@@ -774,7 +831,7 @@ function renderNoticeBlock(notices) {
 
 function menuButton(key, title, text) {
   return `
-    <button class="menu-item" type="button" data-calculator="${key}">
+    <button class="menu-item list-group-item list-group-item-action" type="button" data-calculator="${key}">
       <span>${title}</span>
       <small>${text}</small>
     </button>

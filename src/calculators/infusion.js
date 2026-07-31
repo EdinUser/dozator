@@ -1,12 +1,17 @@
 import {
+  compatibleQuantityDomain,
+  formatConcentration,
   formatConcentrationMgPerMl,
   formatMassMg,
   formatNumber,
+  formatQuantity,
   formatVolumeMl,
   formatVolumeNumber,
   formatVolumeRateMlPerHour,
   massConversionTrace,
   parseDecimal,
+  quantityConversionTrace,
+  toBaseQuantity,
   toMg,
   toMl,
   volumeConversionTrace,
@@ -31,19 +36,27 @@ export function calculateInfusionDoseRate(input) {
   }
 
   const fieldErrors = validatePositiveFieldEntries(fields);
+  const domain = compatibleQuantityDomain([input.medicationAmountUnit, rateQuantityUnit(input.prescribedRateUnit)]);
+
+  if (!domain || (domain === "activity" && isWeightBasedRate(input.prescribedRateUnit))) {
+    fieldErrors.push(
+      { name: "medicationAmountUnit", message: bg.safety.incompatibleQuantityUnits },
+      { name: "prescribedRateUnit", message: bg.safety.incompatibleQuantityUnits },
+    );
+  }
 
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
-  const medicationMg = toMg(input.medicationAmount, input.medicationAmountUnit);
+  const medicationQuantity = toBaseQuantity(input.medicationAmount, input.medicationAmountUnit);
   const finalMl = toMl(input.finalVolume, input.finalVolumeUnit);
-  const rate = rateToMgPerHour(input);
-  const concentration = medicationMg / finalMl;
-  const pumpRate = rate.mgPerHour / concentration;
+  const rate = rateToBasePerHour(input, domain);
+  const concentration = medicationQuantity / finalMl;
+  const pumpRate = rate.quantityPerHour / concentration;
   const volumeRate = hasHoursToRun ? volumeRateFromHours(finalMl, input.hoursToRun) : null;
   const notices = [
-    massConversionTrace(input.medicationAmount, input.medicationAmountUnit, "mg"),
+    quantityConversionTrace(input.medicationAmount, input.medicationAmountUnit, domain),
     volumeConversionTrace(input.finalVolume, input.finalVolumeUnit, "mL"),
     rate.notice,
   ].filter(Boolean);
@@ -52,30 +65,30 @@ export function calculateInfusionDoseRate(input) {
     ok: true,
     primary: formatVolumeRateMlPerHour(pumpRate),
     instructions: [
-      bg.calculations.infusion.concentration(formatConcentrationMgPerMl(concentration)),
+      bg.calculations.infusion.concentration(formatConcentration(concentration, domain)),
       bg.calculations.infusion.setPump(formatVolumeNumber(pumpRate)),
       ...(volumeRate ? [bg.calculations.infusion.volumeRate(formatVolumeNumber(volumeRate.rate), formatNumber(volumeRate.hours))] : []),
     ],
     finalLines: [
-      bg.calculations.infusion.amount(formatMassMg(medicationMg)),
+      bg.calculations.infusion.amount(formatQuantity(medicationQuantity, domain)),
       bg.calculations.infusion.finalVolume(formatVolumeMl(finalMl)),
       ...(rate.weightKg ? [bg.calculations.infusion.weight(formatNumber(rate.weightKg))] : []),
-      bg.calculations.infusion.speed(formatNumber(rate.mgPerHour)),
+      bg.calculations.infusion.speed(formatRatePerHour(rate.quantityPerHour, domain)),
       ...(volumeRate ? [bg.calculations.infusion.hoursToRun(formatNumber(volumeRate.hours))] : []),
     ],
     notices,
     traces: [
-      `${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentrationMgPerMl(concentration)}`,
+      `${formatQuantity(medicationQuantity, domain)} ÷ ${formatVolumeMl(finalMl)} = ${formatConcentration(concentration, domain)}`,
       ...(rate.trace ? [rate.trace] : []),
-      `${formatNumber(rate.mgPerHour)} mg/h ÷ ${formatConcentrationMgPerMl(concentration)} = ${formatVolumeRateMlPerHour(pumpRate)}`,
+      `${formatRatePerHour(rate.quantityPerHour, domain)} ÷ ${formatConcentration(concentration, domain)} = ${formatVolumeRateMlPerHour(pumpRate)}`,
       ...(volumeRate ? [`${formatVolumeMl(finalMl)} ÷ ${formatNumber(volumeRate.hours)} h = ${formatVolumeRateMlPerHour(volumeRate.rate)}`] : []),
     ],
     warnings: highAlertWarning(input.highAlert),
     label: {
-      totalAmount: formatMassMg(medicationMg),
+      totalAmount: formatQuantity(medicationQuantity, domain),
       finalVolume: formatVolumeMl(finalMl),
-      concentration: `${formatNumber(concentration)} mg/mL`,
-      recipe: bg.calculations.infusion.doseRateRecipe(formatMassMg(medicationMg), formatVolumeMl(finalMl), formatVolumeNumber(pumpRate)),
+      concentration: labelConcentration(concentration, domain),
+      recipe: bg.calculations.infusion.doseRateRecipe(formatQuantity(medicationQuantity, domain), formatVolumeMl(finalMl), formatVolumeNumber(pumpRate)),
     },
   };
 }
@@ -90,6 +103,45 @@ function volumeRateFromHours(finalMl, hoursToRun) {
 
 function isWeightBasedRate(unit) {
   return unit?.includes("/kg/");
+}
+
+function rateQuantityUnit(unit) {
+  if (unit === "IU/h") {
+    return "IU";
+  }
+
+  if (unit?.startsWith("µg/")) {
+    return "µg";
+  }
+
+  if (unit?.startsWith("mg/")) {
+    return "mg";
+  }
+
+  return null;
+}
+
+function rateToBasePerHour(input, domain) {
+  if (domain === "activity") {
+    return { quantityPerHour: parseDecimal(input.prescribedRate) };
+  }
+
+  const rate = rateToMgPerHour(input);
+
+  return {
+    quantityPerHour: rate.mgPerHour,
+    weightKg: rate.weightKg,
+    trace: rate.trace,
+    notice: rate.notice,
+  };
+}
+
+function formatRatePerHour(value, domain) {
+  return domain === "activity" ? `${formatNumber(value)} IU/h` : `${formatNumber(value)} mg/h`;
+}
+
+function labelConcentration(value, domain) {
+  return domain === "activity" ? formatConcentration(value, domain) : `${formatNumber(value)} mg/mL`;
 }
 
 function rateToMgPerHour(input) {

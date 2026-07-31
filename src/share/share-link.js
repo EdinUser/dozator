@@ -51,6 +51,16 @@ const shareFields = {
     "timeUnit",
     "highAlert",
   ],
+  iuConverter: [
+    "mode",
+    "relationshipIu",
+    "relationshipIuUnit",
+    "relationshipMass",
+    "relationshipMassUnit",
+    "amountToConvert",
+    "amountToConvertUnit",
+    "resultMassUnit",
+  ],
 };
 
 export function buildShareUrl(calculatorKey, values) {

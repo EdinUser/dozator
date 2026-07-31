@@ -1,12 +1,13 @@
 import {
-  directConcentrationConversionTrace,
-  directConcentrationToMgPerMl,
-  formatConcentrationMgPerMl,
-  formatMassMg,
+  compatibleQuantityDomain,
+  directQuantityConcentrationConversionTrace,
+  directConcentrationToBasePerMl,
+  formatConcentration,
   formatNumber,
+  formatQuantity,
   formatVolumeMl,
-  massConversionTrace,
-  toMg,
+  quantityConversionTrace,
+  toBaseQuantity,
   toMl,
   volumeConversionTrace,
 } from "../units/units.js";
@@ -25,16 +26,25 @@ export function calculateDilution(input) {
     { name: "targetConcentration", label: bg.fields.targetAmountPerMl, value: input.targetConcentration },
   ]);
 
+  const domain = compatibleQuantityDomain([input.availableAmountUnit, input.targetConcentrationUnit]);
+
+  if (!domain) {
+    fieldErrors.push(
+      { name: "availableAmountUnit", message: bg.safety.incompatibleQuantityUnits },
+      { name: "targetConcentrationUnit", message: bg.safety.incompatibleQuantityUnits },
+    );
+  }
+
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
-  const medicationMg = toMg(input.availableAmount, input.availableAmountUnit);
+  const medicationQuantity = toBaseQuantity(input.availableAmount, input.availableAmountUnit);
   const medicationMl = hasMedicationVolume ? toMl(input.availableVolume, input.availableVolumeUnit) : null;
-  const availableMgPerMl = hasMedicationVolume ? medicationMg / medicationMl : null;
-  const targetMgPerMl = directConcentrationToMgPerMl(input.targetConcentration, input.targetConcentrationUnit);
+  const availableQuantityPerMl = hasMedicationVolume ? medicationQuantity / medicationMl : null;
+  const targetQuantityPerMl = directConcentrationToBasePerMl(input.targetConcentration, input.targetConcentrationUnit);
 
-  if (hasMedicationVolume && targetMgPerMl > availableMgPerMl) {
+  if (hasMedicationVolume && targetQuantityPerMl > availableQuantityPerMl) {
     return {
       ok: false,
       errors: [bg.calculations.dilution.impossibleTarget],
@@ -42,30 +52,30 @@ export function calculateDilution(input) {
     };
   }
 
-  const finalMl = medicationMg / targetMgPerMl;
+  const finalMl = medicationQuantity / targetQuantityPerMl;
   const diluentMl = hasMedicationVolume ? finalMl - medicationMl : null;
   const targetSolutionDescription =
     input.targetConcentrationUnit === "%" ? `${formatNumber(input.targetConcentration)}% разтвор` : "";
   const notices = [
-    massConversionTrace(input.availableAmount, input.availableAmountUnit, "mg"),
+    quantityConversionTrace(input.availableAmount, input.availableAmountUnit, domain),
     hasMedicationVolume ? volumeConversionTrace(input.availableVolume, input.availableVolumeUnit, "mL") : null,
-    directConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit),
+    directQuantityConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit, domain),
   ].filter(Boolean);
   const instructions = hasMedicationVolume
     ? [
-        bg.calculations.dilution.useContainer(formatMassMg(medicationMg), formatVolumeMl(medicationMl)),
+        bg.calculations.dilution.useContainer(formatQuantity(medicationQuantity, domain), formatVolumeMl(medicationMl)),
         bg.calculations.dilution.addDiluent(formatVolumeMl(diluentMl)),
         bg.calculations.dilution.finalVolume(formatVolumeMl(finalMl)),
-        bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl), targetSolutionDescription),
+        bg.calculations.dilution.finalConcentration(formatConcentration(targetQuantityPerMl, domain), targetSolutionDescription),
       ]
     : [
-        bg.calculations.dilution.useAmountOnly(formatMassMg(medicationMg)),
+        bg.calculations.dilution.useAmountOnly(formatQuantity(medicationQuantity, domain)),
         bg.calculations.dilution.prepareToFinalVolume(formatVolumeMl(finalMl)),
-        bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl), targetSolutionDescription),
+        bg.calculations.dilution.finalConcentration(formatConcentration(targetQuantityPerMl, domain), targetSolutionDescription),
       ];
   const traces = [
-    hasMedicationVolume ? `${formatMassMg(medicationMg)} ÷ ${formatVolumeMl(medicationMl)} = ${formatConcentrationMgPerMl(availableMgPerMl)}` : null,
-    `${formatMassMg(medicationMg)} ÷ ${formatConcentrationMgPerMl(targetMgPerMl)} = ${formatVolumeMl(finalMl)}`,
+    hasMedicationVolume ? `${formatQuantity(medicationQuantity, domain)} ÷ ${formatVolumeMl(medicationMl)} = ${formatConcentration(availableQuantityPerMl, domain)}` : null,
+    `${formatQuantity(medicationQuantity, domain)} ÷ ${formatConcentration(targetQuantityPerMl, domain)} = ${formatVolumeMl(finalMl)}`,
   ].filter(Boolean);
 
   return {
@@ -73,17 +83,17 @@ export function calculateDilution(input) {
     primary: formatVolumeMl(finalMl),
     instructions,
     finalLines: [
-      bg.calculations.dilution.totalAmount(formatMassMg(medicationMg)),
+      bg.calculations.dilution.totalAmount(formatQuantity(medicationQuantity, domain)),
       bg.calculations.dilution.finalVolumeLine(formatVolumeMl(finalMl)),
-      bg.calculations.dilution.finalConcentrationLine(formatConcentrationMgPerMl(targetMgPerMl)),
+      bg.calculations.dilution.finalConcentrationLine(formatConcentration(targetQuantityPerMl, domain)),
     ],
     notices,
     traces,
     warnings: [...(Number.isFinite(medicationMl) ? volumeWarnings(medicationMl) : []), ...highAlertWarning(input.highAlert)],
     label: {
-      totalAmount: formatMassMg(medicationMg),
+      totalAmount: formatQuantity(medicationQuantity, domain),
       finalVolume: formatVolumeMl(finalMl),
-      concentration: `${formatNumber(targetMgPerMl)} mg/mL`,
+      concentration: labelConcentration(targetQuantityPerMl, domain),
       recipe: hasMedicationVolume
         ? bg.calculations.dilution.recipe(formatVolumeMl(medicationMl), formatVolumeMl(diluentMl))
         : bg.calculations.dilution.amountOnlyRecipe(formatVolumeMl(finalMl)),
@@ -98,15 +108,24 @@ function calculateConcentrationDilution(input) {
     { name: "targetConcentration", label: bg.fields.targetAmountPerMl, value: input.targetConcentration },
   ]);
 
+  const domain = compatibleQuantityDomain([input.sourceConcentrationUnit, input.targetConcentrationUnit]);
+
+  if (!domain) {
+    fieldErrors.push(
+      { name: "sourceConcentrationUnit", message: bg.safety.incompatibleQuantityUnits },
+      { name: "targetConcentrationUnit", message: bg.safety.incompatibleQuantityUnits },
+    );
+  }
+
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
-  const sourceMgPerMl = directConcentrationToMgPerMl(input.sourceConcentration, input.sourceConcentrationUnit);
+  const sourceQuantityPerMl = directConcentrationToBasePerMl(input.sourceConcentration, input.sourceConcentrationUnit);
   const sourceMl = toMl(input.sourceVolume, input.sourceVolumeUnit);
-  const targetMgPerMl = directConcentrationToMgPerMl(input.targetConcentration, input.targetConcentrationUnit);
+  const targetQuantityPerMl = directConcentrationToBasePerMl(input.targetConcentration, input.targetConcentrationUnit);
 
-  if (targetMgPerMl > sourceMgPerMl) {
+  if (targetQuantityPerMl > sourceQuantityPerMl) {
     return {
       ok: false,
       errors: [bg.calculations.dilution.impossibleTarget],
@@ -114,40 +133,40 @@ function calculateConcentrationDilution(input) {
     };
   }
 
-  const finalMl = (sourceMgPerMl * sourceMl) / targetMgPerMl;
+  const finalMl = (sourceQuantityPerMl * sourceMl) / targetQuantityPerMl;
   const diluentMl = finalMl - sourceMl;
-  const totalMedicationMg = sourceMgPerMl * sourceMl;
+  const totalMedicationQuantity = sourceQuantityPerMl * sourceMl;
   const notices = [
-    directConcentrationConversionTrace(input.sourceConcentration, input.sourceConcentrationUnit),
+    directQuantityConcentrationConversionTrace(input.sourceConcentration, input.sourceConcentrationUnit, domain),
     volumeConversionTrace(input.sourceVolume, input.sourceVolumeUnit, "mL"),
-    directConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit),
+    directQuantityConcentrationConversionTrace(input.targetConcentration, input.targetConcentrationUnit, domain),
   ].filter(Boolean);
 
   return {
     ok: true,
     primary: formatVolumeMl(finalMl),
     instructions: [
-      bg.calculations.dilution.useSourceSolution(formatVolumeMl(sourceMl), formatConcentrationMgPerMl(sourceMgPerMl)),
+      bg.calculations.dilution.useSourceSolution(formatVolumeMl(sourceMl), formatConcentration(sourceQuantityPerMl, domain)),
       bg.calculations.dilution.addDiluent(formatVolumeMl(diluentMl)),
       bg.calculations.dilution.finalVolume(formatVolumeMl(finalMl)),
-      bg.calculations.dilution.finalConcentration(formatConcentrationMgPerMl(targetMgPerMl), concentrationDescription(input.targetConcentration, input.targetConcentrationUnit)),
+      bg.calculations.dilution.finalConcentration(formatConcentration(targetQuantityPerMl, domain), concentrationDescription(input.targetConcentration, input.targetConcentrationUnit)),
     ],
     finalLines: [
-      bg.calculations.dilution.sourceConcentrationLine(formatConcentrationMgPerMl(sourceMgPerMl)),
+      bg.calculations.dilution.sourceConcentrationLine(formatConcentration(sourceQuantityPerMl, domain)),
       bg.calculations.dilution.finalVolumeLine(formatVolumeMl(finalMl)),
-      bg.calculations.dilution.finalConcentrationLine(formatConcentrationMgPerMl(targetMgPerMl)),
+      bg.calculations.dilution.finalConcentrationLine(formatConcentration(targetQuantityPerMl, domain)),
     ],
     notices,
     traces: [
-      `${formatConcentrationMgPerMl(sourceMgPerMl)} × ${formatVolumeMl(sourceMl)} = ${formatMassMg(totalMedicationMg)}`,
-      `${formatMassMg(totalMedicationMg)} ÷ ${formatConcentrationMgPerMl(targetMgPerMl)} = ${formatVolumeMl(finalMl)}`,
+      `${formatConcentration(sourceQuantityPerMl, domain)} × ${formatVolumeMl(sourceMl)} = ${formatQuantity(totalMedicationQuantity, domain)}`,
+      `${formatQuantity(totalMedicationQuantity, domain)} ÷ ${formatConcentration(targetQuantityPerMl, domain)} = ${formatVolumeMl(finalMl)}`,
       `${formatVolumeMl(finalMl)} - ${formatVolumeMl(sourceMl)} = ${formatVolumeMl(diluentMl)}`,
     ],
     warnings: [...volumeWarnings(sourceMl), ...highAlertWarning(input.highAlert)],
     label: {
-      totalAmount: formatMassMg(totalMedicationMg),
+      totalAmount: formatQuantity(totalMedicationQuantity, domain),
       finalVolume: formatVolumeMl(finalMl),
-      concentration: `${formatNumber(targetMgPerMl)} mg/mL`,
+      concentration: labelConcentration(targetQuantityPerMl, domain),
       recipe: bg.calculations.dilution.recipe(formatVolumeMl(sourceMl), formatVolumeMl(diluentMl)),
     },
   };
@@ -155,4 +174,8 @@ function calculateConcentrationDilution(input) {
 
 function concentrationDescription(value, unit) {
   return unit === "%" ? `${formatNumber(value)}% разтвор` : "";
+}
+
+function labelConcentration(value, domain) {
+  return domain === "activity" ? formatConcentration(value, domain) : `${formatNumber(value)} mg/mL`;
 }

@@ -70,6 +70,57 @@ test("QR URL restore sanitizes free-text fields and recalculates locally", async
   await expect(page.locator("#requiredDose")).toHaveValue("350");
 });
 
+test("QR URL restore rejects mixed IU and mass units without changing restored units", async ({ page }) => {
+  const payload = {
+    v: 1,
+    calculator: "dose",
+    values: {
+      requiredDose: "250",
+      requiredDoseUnit: "µg",
+      availableAmount: "5000",
+      availableAmountUnit: "IU",
+      availableVolume: "1",
+      availableVolumeUnit: "mL",
+      highAlert: false,
+    },
+  };
+  const encoded = Buffer.from(encodeURIComponent(JSON.stringify(payload))).toString("base64");
+
+  await page.goto(`/#calc=${encoded}`);
+
+  await expect(page.getByRole("alert").filter({ hasText: "Заредено е предишно изчисление" })).toBeVisible();
+  await expect(page.getByRole("alert", { name: "Грешки в изчислението" })).toContainText("IU и масови единици");
+  await expect(page.locator("select[name='requiredDoseUnit']")).toHaveValue("µg");
+  await expect(page.locator("select[name='availableAmountUnit']")).toHaveValue("IU");
+});
+
+test("QR URL restore recalculates IU converter payloads", async ({ page }) => {
+  const payload = {
+    v: 1,
+    calculator: "iuConverter",
+    values: {
+      mode: "iuToMass",
+      relationshipIu: "1",
+      relationshipIuUnit: "IU",
+      relationshipMass: "0.025",
+      relationshipMassUnit: "µg",
+      amountToConvert: "2000",
+      amountToConvertUnit: "IU",
+      resultMassUnit: "µg",
+      substanceName: "not allowed",
+    },
+  };
+  const encoded = Buffer.from(encodeURIComponent(JSON.stringify(payload))).toString("base64");
+
+  await page.goto(`/#calc=${encoded}`);
+
+  await expect(page.getByRole("alert").filter({ hasText: "Заредено е предишно изчисление" })).toBeVisible();
+  await expect(page.getByText("50 µg").first()).toBeVisible();
+  await expect(page.locator("#relationshipIu")).toHaveValue("1");
+  await expect(page.locator("#relationshipMass")).toHaveValue("0.025");
+  await expect(page.locator("#amountToConvert")).toHaveValue("2000");
+});
+
 test("initial form examples are placeholders and focused values are selected", async ({ page }) => {
   await page.goto("/#dose");
   await expect(page.locator("#requiredDose")).toHaveValue("");
@@ -95,9 +146,11 @@ test("screen hash URLs load and survive reload", async ({ page }) => {
     { hash: "dilution", heading: "Разреждане до желано количество в 1 мл" },
     { hash: "reconstitution", heading: "Разтваряне на флакон" },
     { hash: "infusion", heading: "Инфузионен калкулатор" },
+    { hash: "iuConverter", heading: "IU към маса" },
     { hash: "validation", heading: "Как са проверени изчисленията" },
     { hash: "documentation", heading: "Документация" },
     { hash: "documentation/dose", heading: "Доза от готов разтвор" },
+    { hash: "documentation/iuConverter", heading: "IU към маса" },
   ]) {
     await page.goto(`/#${route.hash}`);
     await expect(page.getByRole("heading", { name: route.heading })).toBeVisible();

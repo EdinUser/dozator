@@ -90,6 +90,31 @@ describe("share links", () => {
     });
   });
 
+  it("keeps only structured IU converter fields", () => {
+    expect(
+      shareableValues("iuConverter", {
+        mode: "iuToMass",
+        relationshipIu: "1",
+        relationshipIuUnit: "IU",
+        relationshipMass: "0.025",
+        relationshipMassUnit: "µg",
+        amountToConvert: "2000",
+        amountToConvertUnit: "IU",
+        resultMassUnit: "µg",
+        substanceName: "not shared",
+      }),
+    ).toEqual({
+      mode: "iuToMass",
+      relationshipIu: "1",
+      relationshipIuUnit: "IU",
+      relationshipMass: "0.025",
+      relationshipMassUnit: "µg",
+      amountToConvert: "2000",
+      amountToConvertUnit: "IU",
+      resultMassUnit: "µg",
+    });
+  });
+
   it("ignores invalid hashes", () => {
     expect(readSharedCalculation("#not-calc=abc")).toBeNull();
     expect(readSharedCalculation("#calc=not-valid")).toBeNull();

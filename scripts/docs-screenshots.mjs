@@ -78,6 +78,15 @@ const examples = [
       await page.locator("#time").fill("4");
     },
   },
+  {
+    name: "iu-converter-result",
+    route: "iuConverter",
+    run: async (page) => {
+      await page.locator("#relationshipIu").fill("1");
+      await page.locator("#relationshipMass").fill("0.025");
+      await page.locator("#amountToConvert").fill("2000");
+    },
+  },
 ];
 
 await mkdir(outputDir, { recursive: true });

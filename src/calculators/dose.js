@@ -1,11 +1,13 @@
 import {
-  concentrationToMgPerMl,
-  concentrationConversionTrace,
-  formatMassMg,
+  compatibleQuantityDomain,
+  formatConcentration,
+  formatQuantity,
   formatNumber,
   formatVolumeMl,
-  massConversionTrace,
-  toMg,
+  quantityConversionTrace,
+  toBaseQuantity,
+  toMl,
+  volumeConversionTrace,
 } from "../units/units.js";
 import { highAlertWarning, validatePositiveFieldEntries, volumeWarnings } from "../safety/warnings.js";
 import { bg } from "../i18n/bg.js";
@@ -17,39 +19,44 @@ export function calculateDose(input) {
     { name: "availableVolume", label: bg.fields.availableVolume, value: input.availableVolume },
   ]);
 
+  const domain = compatibleQuantityDomain([input.requiredDoseUnit, input.availableAmountUnit]);
+
+  if (!domain) {
+    fieldErrors.push(
+      { name: "requiredDoseUnit", message: bg.safety.incompatibleQuantityUnits },
+      { name: "availableAmountUnit", message: bg.safety.incompatibleQuantityUnits },
+    );
+  }
+
   if (fieldErrors.length) {
     return { ok: false, errors: fieldErrors.map((field) => field.message), fieldErrors };
   }
 
-  const requiredMg = toMg(input.requiredDose, input.requiredDoseUnit);
-  const availableMgPerMl = concentrationToMgPerMl(
-    input.availableAmount,
-    input.availableAmountUnit,
-    input.availableVolume,
-    input.availableVolumeUnit,
-  );
-  const withdrawMl = requiredMg / availableMgPerMl;
+  const requiredQuantity = toBaseQuantity(input.requiredDose, input.requiredDoseUnit);
+  const availableQuantityPerMl = toBaseQuantity(input.availableAmount, input.availableAmountUnit) / toMl(input.availableVolume, input.availableVolumeUnit);
+  const withdrawMl = requiredQuantity / availableQuantityPerMl;
 
   const traces = [
-    `${formatMassMg(requiredMg)} ÷ ${formatMassMg(availableMgPerMl)}/mL = ${formatVolumeMl(withdrawMl)}`,
+    `${formatQuantity(requiredQuantity, domain)} ÷ ${formatConcentration(availableQuantityPerMl, domain)} = ${formatVolumeMl(withdrawMl)}`,
   ];
   const notices = [
-    massConversionTrace(input.requiredDose, input.requiredDoseUnit, "mg"),
-    ...concentrationConversionTrace(input.availableAmount, input.availableAmountUnit, input.availableVolume, input.availableVolumeUnit),
+    quantityConversionTrace(input.requiredDose, input.requiredDoseUnit, domain),
+    quantityConversionTrace(input.availableAmount, input.availableAmountUnit, domain),
+    volumeConversionTrace(input.availableVolume, input.availableVolumeUnit, "mL"),
   ].filter(Boolean);
 
   return {
     ok: true,
     primary: formatVolumeMl(withdrawMl),
-    instructions: [bg.calculations.dose.withdraw(formatVolumeMl(withdrawMl)), bg.calculations.dose.contains(formatMassMg(requiredMg))],
-    finalLines: [bg.calculations.dose.finalDose(formatMassMg(requiredMg))],
+    instructions: [bg.calculations.dose.withdraw(formatVolumeMl(withdrawMl)), bg.calculations.dose.contains(formatQuantity(requiredQuantity, domain))],
+    finalLines: [bg.calculations.dose.finalDose(formatQuantity(requiredQuantity, domain))],
     notices,
     traces,
     warnings: [...volumeWarnings(withdrawMl), ...highAlertWarning(input.highAlert)],
     label: {
-      totalAmount: formatMassMg(requiredMg),
+      totalAmount: formatQuantity(requiredQuantity, domain),
       finalVolume: formatVolumeMl(withdrawMl),
-      concentration: `${formatNumber(availableMgPerMl)} mg/mL`,
+      concentration: domain === "activity" ? formatConcentration(availableQuantityPerMl, domain) : `${formatNumber(availableQuantityPerMl)} mg/mL`,
       recipe: bg.calculations.dose.withdraw(formatVolumeMl(withdrawMl)),
     },
   };
