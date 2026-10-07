@@ -35,6 +35,8 @@ jobs:
         run: npm test
 
       - name: Build production assets
+        env:
+          VITE_PINGER_ENDPOINT: ${{ secrets.VITE_PINGER_ENDPOINT }}
         run: npm run build
 
       - name: Install Playwright browsers

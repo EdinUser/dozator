@@ -38,6 +38,7 @@ github.event_name == 'push' && github.ref == 'refs/heads/main'
 - `VPS_PORT`
 - `VPS_WEB_ROOT`
 - `VPS_WEB_OWNER`
+- `VITE_PINGER_ENDPOINT` — public pinger API endpoint, injected only while building production assets.
 
 Secrets не са автоматично видими между различни GitHub repositories. Ако се създаде нов repo или fork, трябва да се добавят там отделно.
 
