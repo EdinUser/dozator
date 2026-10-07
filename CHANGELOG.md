@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+- Load the public Pinger endpoint from an explicit build-generated browser configuration instead of Vite environment replacement.
+- Verify that the configured endpoint is present in the production artifact before deployment.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.6.1
 
 - Add anonymous Pinger visit telemetry when a production endpoint is configured.

@@ -12,6 +12,23 @@ describe("sendPingerVisit", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("uses the build-generated browser configuration by default", () => {
+    const endpoint = "https://example.test/api/v1/ping";
+    const storage = memoryStorage();
+    const fetchMock = vi.fn(() => Promise.resolve());
+    const previousEndpoint = globalThis.__DOZATOR_PINGER_ENDPOINT__;
+
+    globalThis.__DOZATOR_PINGER_ENDPOINT__ = endpoint;
+
+    try {
+      sendPingerVisit({ storage, createVisitorId: () => "visitor-id", fetchImpl: fetchMock });
+    } finally {
+      globalThis.__DOZATOR_PINGER_ENDPOINT__ = previousEndpoint;
+    }
+
+    expect(fetchMock).toHaveBeenCalledWith(endpoint, expect.any(Object));
+  });
+
   it("stores one random visitor ID and sends the public project key", () => {
     const storage = memoryStorage();
     const fetchMock = vi.fn(() => Promise.resolve());
