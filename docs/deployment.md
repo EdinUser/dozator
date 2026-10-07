@@ -24,6 +24,8 @@ Deploy job се изпълнява само при:
 github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
 
+E2E тестовете се изпълняват преди production build-а и използват празната checked-in Pinger конфигурация. След тях workflow-ът генерира endpoint конфигурацията само за production artifact-а, така че тестовите browser сесии не създават telemetry записи.
+
 ## Runtime
 
 Сайтът е статичен. Няма Node server в production. Production web server трябва да сервира файловете от build output директорията, която workflow-ът получава чрез secret.

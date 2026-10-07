@@ -34,21 +34,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build production assets
-        env:
-          VITE_PINGER_ENDPOINT: ${{ secrets.VITE_PINGER_ENDPOINT }}
-        run: |
-          if [ -z "$VITE_PINGER_ENDPOINT" ]; then
-            echo "::error::VITE_PINGER_ENDPOINT must be configured for production builds."
-            exit 1
-          fi
-          node scripts/write-pinger-config.mjs
-          npm run build
-          if ! grep -Fq -- "$VITE_PINGER_ENDPOINT" dist/pinger-config.js; then
-            echo "::error::The Pinger endpoint was not written to the production artifact."
-            exit 1
-          fi
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
@@ -63,6 +48,21 @@ jobs:
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
+
+      - name: Build production assets
+        env:
+          VITE_PINGER_ENDPOINT: ${{ secrets.VITE_PINGER_ENDPOINT }}
+        run: |
+          if [ -z "$VITE_PINGER_ENDPOINT" ]; then
+            echo "::error::VITE_PINGER_ENDPOINT must be configured for production builds."
+            exit 1
+          fi
+          node scripts/write-pinger-config.mjs
+          npm run build
+          if ! grep -Fq -- "$VITE_PINGER_ENDPOINT" dist/pinger-config.js; then
+            echo "::error::The Pinger endpoint was not written to the production artifact."
+            exit 1
+          fi
 
       - name: Upload build artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
