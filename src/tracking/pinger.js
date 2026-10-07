@@ -2,7 +2,7 @@ const projectKey = "pk_7mlXpTbUKeYz2zXn-pOPAyK2iW389KLso-1ZzZY3fFo";
 const visitorIdStorageKey = `pinger:${projectKey}:visitor-id`;
 
 export function sendPingerVisit({
-  endpoint = import.meta.env.VITE_PINGER_ENDPOINT,
+  endpoint = globalThis.__DOZATOR_PINGER_ENDPOINT__,
   storage,
   createVisitorId,
   fetchImpl,

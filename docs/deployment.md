@@ -38,7 +38,7 @@ github.event_name == 'push' && github.ref == 'refs/heads/main'
 - `VPS_PORT`
 - `VPS_WEB_ROOT`
 - `VPS_WEB_OWNER`
-- `VITE_PINGER_ENDPOINT` — public pinger API endpoint, injected only while building production assets. Production CI fails before building if it is absent, preventing a silent telemetry no-op deployment.
+- `VITE_PINGER_ENDPOINT` — public pinger API endpoint, written only to the generated `pinger-config.js` production asset. Production CI fails if it is absent or if the generated artifact does not contain it, preventing a silent telemetry no-op deployment.
 
 Secrets не са автоматично видими между различни GitHub repositories. Ако се създаде нов repo или fork, трябва да се добавят там отделно.
 
