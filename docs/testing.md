@@ -68,7 +68,7 @@ npx playwright install chromium
 
 ## Flakiness Бележки
 
-Playwright е конфигуриран с `workers: 1`, защото PWA/service-worker state и shared origin behavior могат да направят offline/restore тестовете нестабилни при паралелно изпълнение.
+Playwright е конфигуриран с `workers: 1`, защото PWA/service-worker state и shared origin behavior могат да направят offline/restore тестовете нестабилни при паралелно изпълнение. В CI има един retry само за transient crash на browser process; локалните runs остават без retry.
 
 Accessibility helper-ът blur-ва активния елемент преди axe scan. Това стабилизира mobile Chromium tap-active rendering. Keyboard focus behavior се проверява отделно в същия spec и не трябва да се премахва.
 
