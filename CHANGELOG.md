@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+
+- Add anonymous Pinger visit telemetry when a production endpoint is configured.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.6.0
 
 - Add IU as a separate activity quantity domain for supported dose, dilution, reconstitution, and simple infusion dose-rate calculations.
