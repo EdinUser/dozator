@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3
+
+- Replace the custom Pinger POST implementation with the official Pinger widget and the updated public project key; exclude the widget from E2E preview builds.
+- Remove the obsolete production endpoint secret and generated Pinger configuration.
+- PWA cache version bump to refresh installed clients.
+
 ## 0.6.2
 
 - Load the public Pinger endpoint from an explicit build-generated browser configuration instead of Vite environment replacement.

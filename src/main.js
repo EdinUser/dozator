@@ -34,7 +34,6 @@ import { bg } from "./i18n/bg.js";
 import { formatNumber } from "./units/units.js";
 import { appVersion } from "./app-version.js";
 import { registerServiceWorker } from "./pwa/register-service-worker.js";
-import { sendPingerVisit } from "./tracking/pinger.js";
 
 const acknowledgementKey = "dozator-safety-acknowledged";
 const themeKey = "dozator-theme";
@@ -87,7 +86,6 @@ const calculators = {
 };
 
 registerServiceWorker();
-sendPingerVisit();
 renderApp();
 
 function renderApp() {
