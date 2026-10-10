@@ -25,7 +25,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && node scripts/remove-pinger-widget-for-e2e.mjs && npm run preview -- --host 127.0.0.1 --port 4173",
+    command: "npm run build -- --mode e2e && npm run preview -- --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

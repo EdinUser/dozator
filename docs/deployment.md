@@ -24,7 +24,7 @@ Deploy job се изпълнява само при:
 github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
 
-Pinger widget-ът е част от `index.html` и използва public project key. Не е необходим build-time secret или генерирана runtime конфигурация. E2E preview build-ът премахва widget markup-а само от `dist/index.html`, така че автоматизираните browser сесии не генерират реална telemetry.
+Pinger widget-ът е част от `index.html` и използва public project key. Не е необходим build-time secret или генерирана runtime конфигурация. E2E preview build-ът използва Vite mode `e2e`, който премахва widget markup-а от `dist/index.html` и прекъсва build-а, ако markup-ът не бъде намерен. Така автоматизираните browser сесии не генерират реална telemetry.
 
 ## Runtime
 
