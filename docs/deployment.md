@@ -24,7 +24,7 @@ Deploy job се изпълнява само при:
 github.event_name == 'push' && github.ref == 'refs/heads/main'
 ```
 
-E2E тестовете се изпълняват преди production build-а и използват празната checked-in Pinger конфигурация. След тях workflow-ът генерира endpoint конфигурацията само за production artifact-а, така че тестовите browser сесии не създават telemetry записи.
+Pinger widget-ът е част от `index.html` и използва public project key. Не е необходим build-time secret или генерирана runtime конфигурация. E2E preview build-ът премахва widget markup-а само от `dist/index.html`, така че автоматизираните browser сесии не генерират реална telemetry.
 
 ## Runtime
 
@@ -40,8 +40,6 @@ E2E тестовете се изпълняват преди production build-а 
 - `VPS_PORT`
 - `VPS_WEB_ROOT`
 - `VPS_WEB_OWNER`
-- `VITE_PINGER_ENDPOINT` — public pinger API endpoint, written only to the generated `pinger-config.js` production asset. Production CI fails if it is absent or if the generated artifact does not contain it, preventing a silent telemetry no-op deployment.
-
 Secrets не са автоматично видими между различни GitHub repositories. Ако се създаде нов repo или fork, трябва да се добавят там отделно.
 
 ## Какво Качва Deploy

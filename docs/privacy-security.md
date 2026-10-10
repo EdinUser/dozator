@@ -4,9 +4,9 @@
 
 ## Потребителски Данни
 
-Приложението не трябва да събира или изпраща лични данни. Единственото изключение е optional anonymous visit telemetry към отделната pinger услуга, когато production build има `VITE_PINGER_ENDPOINT`.
+Приложението не трябва да събира или изпраща лични данни. Единственото изключение е anonymous visit telemetry чрез Pinger widget, зареден от `index.html` с public project key.
 
-Telemetry payload-ът съдържа само публичния project key и случаен UUID, съхранен локално в `localStorage`. Не съдържа данни от калкулаторите, QR/hash payload, история, шаблони, медицински стойности, IP адрес, user agent или account данни. Pinger услугата хешира UUID-а server-side.
+Интеграцията не подава към widget-а данни от калкулаторите, QR/hash payload, история, шаблони, медицински стойности или account данни. Не добавяйте такива данни като widget attributes или custom events.
 
 Забранено е QR/share/history/templates да съдържат:
 
