@@ -2,8 +2,9 @@
 
 ## 0.6.3
 
-- Replace the custom Pinger POST implementation with the official Pinger widget and the updated public project key; exclude the widget from E2E preview builds.
+- Replace the custom Pinger POST implementation with the official Pinger widget and the updated public project key; exclude the widget from E2E preview builds at Vite build time.
 - Remove the obsolete production endpoint secret and generated Pinger configuration.
+- Update GitHub Actions and pin runners to supported Node 24 / Ubuntu 24.04 versions.
 - PWA cache version bump to refresh installed clients.
 
 ## 0.6.2
