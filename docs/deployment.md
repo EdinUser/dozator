@@ -39,7 +39,7 @@ Pinger widget-ът е част от `index.html` и използва public proj
 - `VPS_SSH_KEY`
 - `VPS_PORT`
 - `VPS_WEB_ROOT`
-- `VPS_WEB_OWNER`
+- `VPS_KNOWN_HOSTS`
 Secrets не са автоматично видими между различни GitHub repositories. Ако се създаде нов repo или fork, трябва да се добавят там отделно.
 
 ## Какво Качва Deploy
@@ -50,7 +50,11 @@ CI build-ва:
 npm run build
 ```
 
-После качва съдържанието на `dist/` към production web root. Данни от потребителя не се качват, защото history/templates/theme са само в browser `localStorage`.
+После качва съдържанието на `dist/` към production web root.
+SSH проверява host key чрез `VPS_KNOWN_HOSTS`; стойността трябва да е предварително проверена.
+Deploy user-ът трябва да има права за запис в тази директория. Не е нужен root или рекурсивен `chown`.
+При sync директориите получават права `755`, а файловете — `644`.
+Control-panel директориите `stats/`, `error/` и файловете `.ht*` в корена се запазват. Данни от потребителя не се качват, защото history/templates/theme са само в browser `localStorage`.
 
 ## DNS/Control Panel Бележки
 
