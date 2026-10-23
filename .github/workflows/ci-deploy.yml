@@ -72,7 +72,7 @@ jobs:
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
       VPS_PORT: ${{ secrets.VPS_PORT }}
       WEB_ROOT: ${{ secrets.VPS_WEB_ROOT }}
-      WEB_OWNER: ${{ secrets.VPS_WEB_OWNER }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
 
     steps:
       - name: Download build artifact
@@ -84,25 +84,23 @@ jobs:
       - name: Configure SSH key
         run: |
           set -euo pipefail
+          umask 077
           mkdir -p ~/.ssh
-          echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
-          chmod 600 ~/.ssh/vps_key
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
 
       - name: Verify deploy connection and target
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" \
+          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=yes "${VPS_USER}@${VPS_HOST}" \
             "set -euo pipefail; test -d '${WEB_ROOT}'; test -w '${WEB_ROOT}'; tmp='${WEB_ROOT}/.dozator-deploy-test'; printf 'ok' > \"\$tmp\"; test \"\$(cat \"\$tmp\")\" = 'ok'; rm -f \"\$tmp\""
 
       - name: Sync static files to VPS
         run: |
           set -euo pipefail
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/vps_key -p ${VPS_PORT} -o StrictHostKeyChecking=no" \
+          rsync -avz --delete --chmod=D755,F644 \
+            --exclude '/stats/' \
+            --exclude '/error/' \
+            --exclude '/.ht*' \
+            -e "ssh -i ~/.ssh/vps_key -p ${VPS_PORT} -o StrictHostKeyChecking=yes" \
             dist/ "${VPS_USER}@${VPS_HOST}:${WEB_ROOT}/"
-
-      - name: Fix production permissions
-        run: |
-          set -euo pipefail
-          ssh -i ~/.ssh/vps_key -p "${VPS_PORT}" -o StrictHostKeyChecking=no "${VPS_USER}@${VPS_HOST}" \
-            "set -euo pipefail; chown -R '${WEB_OWNER}' '${WEB_ROOT}'; find '${WEB_ROOT}' -type d -exec chmod 755 {} \;; find '${WEB_ROOT}' -type f -exec chmod 644 {} \;"
